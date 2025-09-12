@@ -48,11 +48,11 @@ class TokenData(BaseModel):
 class User(BaseModel):
     id: str
     email: str
-    name: Optional[str] = None
+    display_name: Optional[str] = None
     avatar_url: Optional[str] = None
-    github_username: Optional[str] = None
+    subscription_tier: Optional[str] = None  # subscription tier
     created_at: datetime
-    is_premium: bool = False
+    updated_at: datetime
 
 
 # JWT Token Functions
@@ -98,7 +98,7 @@ async def get_current_user(token_data: TokenData = Depends(verify_token)) -> Use
         supabase = get_supabase_client()
         
         # Get user from database
-        response = supabase.table("users").select("*").eq("id", token_data.user_id).single().execute()
+        response = supabase.table("profiles").select("*").eq("id", token_data.user_id).single().execute()
         
         if not response.data:
             raise HTTPException(
@@ -143,7 +143,7 @@ async def get_current_user_optional(token_data: Optional[TokenData] = Depends(ve
         supabase = get_supabase_client()
         
         # Get user from database
-        response = supabase.table("users").select("*").eq("id", token_data.user_id).single().execute()
+        response = supabase.table("profiles").select("*").eq("id", token_data.user_id).single().execute()
         
         if not response.data:
             return None
@@ -241,31 +241,75 @@ async def github_callback(request: Request, code: str, state: str = None):
         emails = email_response.json()
         primary_email = next((email["email"] for email in emails if email["primary"]), github_user.get("email"))
         
-        # Create or update user in Supabase
+        # Create or sign in user with Supabase Auth
         supabase = get_supabase_client()
         
-        # Check if user exists
-        existing_user = supabase.table("users").select("*").eq("github_id", str(github_user["id"])).execute()
+        try:
+            # Try to sign in with email (user might already exist)
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": primary_email,
+                "password": f"github_oauth_{github_user['id']}"  # Temporary password pattern
+            })
+            user_id = auth_response.user.id
+            print(f"User signed in: {user_id}")
+            
+        except Exception as signin_error:
+            print(f"Sign in failed, creating new user: {signin_error}")
+            
+            # User doesn't exist, create via Auth
+            try:
+                auth_response = supabase.auth.sign_up({
+                    "email": primary_email,
+                    "password": f"github_oauth_{github_user['id']}",  # Temporary password
+                    "options": {
+                        "data": {
+                            "display_name": github_user.get("name") or github_user.get("login"),
+                            "avatar_url": github_user.get("avatar_url"),
+                            "provider": "github"
+                        }
+                    }
+                })
+                user_id = auth_response.user.id
+                print(f"New user created: {user_id}")
+                
+                # Create corresponding profile record (since no auto-trigger exists)
+                try:
+                    profile_data = {
+                        "id": str(user_id),  # Use the auth user ID
+                        "email": primary_email,
+                        "display_name": github_user.get("name") or github_user.get("login"),
+                        "avatar_url": github_user.get("avatar_url")
+                    }
+                    
+                    profile_result = supabase.table("profiles").insert(profile_data).execute()
+                    print(f"Profile created: {profile_result.data[0]['id'] if profile_result.data else 'unknown'}")
+                    
+                except Exception as profile_error:
+                    print(f"Profile creation failed: {profile_error}")
+                    # Don't fail the entire auth flow - user is created in auth system
+                
+            except Exception as signup_error:
+                print(f"Signup failed: {signup_error}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to create user account: {str(signup_error)}"
+                )
         
-        user_data = {
-            "github_id": str(github_user["id"]),
-            "email": primary_email,
-            "name": github_user.get("name") or github_user.get("login"),
-            "avatar_url": github_user.get("avatar_url"),
-            "github_username": github_user.get("login"),
-            "updated_at": datetime.utcnow().isoformat()
-        }
-        
-        if existing_user.data:
-            # Update existing user
-            user_record = supabase.table("users").update(user_data).eq("github_id", str(github_user["id"])).execute()
-            user_id = existing_user.data[0]["id"]
-        else:
-            # Create new user
-            user_data["created_at"] = datetime.utcnow().isoformat()
-            user_data["is_premium"] = False
-            user_record = supabase.table("users").insert(user_data).execute()
-            user_id = user_record.data[0]["id"]
+        # Also ensure profile exists for sign-in case
+        try:
+            existing_profile = supabase.table("profiles").select("*").eq("id", str(user_id)).execute()
+            if not existing_profile.data:
+                print(f"Creating missing profile for existing user: {user_id}")
+                profile_data = {
+                    "id": str(user_id),
+                    "email": primary_email,
+                    "display_name": github_user.get("name") or github_user.get("login"),
+                    "avatar_url": github_user.get("avatar_url")
+                }
+                supabase.table("profiles").insert(profile_data).execute()
+                print(f"Profile created for existing user")
+        except Exception as e:
+            print(f"Profile check/creation failed: {e}")
         
         # Create JWT token
         access_token = create_access_token(

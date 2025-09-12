@@ -59,16 +59,14 @@ class PersistentStorage:
                     "error": f"Storage upload failed: {upload_result['error']}"
                 }
             
-            # Save record to database
+            # Save record to database (matching actual table schema)
+            file_size = os.path.getsize(image_path)
             image_record = {
                 "user_id": self.user_id,
                 "original_filename": filename,
                 "storage_path": upload_result["storage_path"],
-                "public_url": upload_result["public_url"],
-                "file_size_bytes": os.path.getsize(image_path),
-                "dimensions": metadata.get("dimensions", "Unknown"),
-                "format": metadata.get("format", "Unknown"),
-                "uploaded_at": datetime.utcnow().isoformat(),
+                "original_size": file_size,
+                "original_dimensions": metadata.get("dimensions", "Unknown"),
                 "metadata": metadata
             }
             
@@ -136,19 +134,19 @@ class PersistentStorage:
                     "error": f"Storage upload failed: {upload_result['error']}"
                 }
             
-            # Save optimization record to database
+            # Save optimization record to database (matching processed_images schema)
             optimization_record = {
                 "image_id": image_id,
                 "user_id": self.user_id,
-                "preset": preset,
+                "preset_name": preset,
                 "storage_path": upload_result["storage_path"],
                 "public_url": upload_result["public_url"],
                 "file_size_bytes": os.path.getsize(image_path),
-                "optimized_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.utcnow().isoformat(),
                 "metadata": optimization_metadata
             }
             
-            db_result = self.supabase.table("optimizations").insert(optimization_record).execute()
+            db_result = self.supabase.table("processed_images").insert(optimization_record).execute()
             
             if not db_result.data:
                 return {
@@ -184,11 +182,11 @@ class PersistentStorage:
             Dictionary with images and pagination info
         """
         try:
-            # Get images with their optimizations
+            # Get images with their processed versions
             images_query = (
                 self.supabase
                 .table("images")
-                .select("*, optimizations(*)")
+                .select("*, processed_images(*)")
                 .eq("user_id", self.user_id)
                 .order("uploaded_at", desc=True)
                 .limit(limit)
@@ -225,28 +223,28 @@ class PersistentStorage:
     
     def get_optimization_history(self, image_id: str) -> Dict[str, Any]:
         """
-        Get optimization history for a specific image.
+        Get processing history for a specific image.
         
         Args:
             image_id: ID of the original image
             
         Returns:
-            Dictionary with optimization history
+            Dictionary with processing history
         """
         try:
             result = (
                 self.supabase
-                .table("optimizations")
+                .table("processed_images")
                 .select("*")
                 .eq("image_id", image_id)
                 .eq("user_id", self.user_id)  # Ensure user owns the image
-                .order("optimized_at", desc=True)
+                .order("processed_at", desc=True)
                 .execute()
             )
             
             return {
                 "success": True,
-                "optimizations": result.data
+                "processed_images": result.data
             }
             
         except Exception as e:
@@ -257,7 +255,7 @@ class PersistentStorage:
     
     def delete_image(self, image_id: str) -> Dict[str, Any]:
         """
-        Delete image and all its optimizations.
+        Delete image and all its processed versions.
         
         Args:
             image_id: ID of the image to delete
@@ -270,7 +268,7 @@ class PersistentStorage:
             image_result = (
                 self.supabase
                 .table("images")
-                .select("*, optimizations(*)")
+                .select("*, processed_images(*)")
                 .eq("id", image_id)
                 .eq("user_id", self.user_id)
                 .single()
@@ -285,10 +283,10 @@ class PersistentStorage:
             
             image_data = image_result.data
             
-            # Delete optimized images from storage
-            for optimization in image_data.get("optimizations", []):
+            # Delete processed images from storage
+            for processed_image in image_data.get("processed_images", []):
                 try:
-                    self.supabase.storage.from_("optimized").remove([optimization["storage_path"]])
+                    self.supabase.storage.from_("optimized").remove([processed_image["storage_path"]])
                 except:
                     pass  # Continue even if storage deletion fails
             
@@ -298,8 +296,8 @@ class PersistentStorage:
             except:
                 pass  # Continue even if storage deletion fails
             
-            # Delete optimization records
-            self.supabase.table("optimizations").delete().eq("image_id", image_id).execute()
+            # Delete processed image records
+            self.supabase.table("processed_images").delete().eq("image_id", image_id).execute()
             
             # Delete image record
             self.supabase.table("images").delete().eq("id", image_id).execute()
@@ -327,27 +325,27 @@ class PersistentStorage:
             images_result = (
                 self.supabase
                 .table("images")
-                .select("file_size_bytes")
+                .select("original_size")
                 .eq("user_id", self.user_id)
                 .execute()
             )
             
-            # Get optimization count and total size
-            optimizations_result = (
+            # Get processed images count and total size
+            processed_images_result = (
                 self.supabase
-                .table("optimizations")
+                .table("processed_images")
                 .select("file_size_bytes")
                 .eq("user_id", self.user_id)
                 .execute()
             )
             
             original_images_count = len(images_result.data)
-            original_total_size = sum(img.get("file_size_bytes", 0) for img in images_result.data)
+            original_total_size = sum(img.get("original_size", 0) for img in images_result.data)
             
-            optimizations_count = len(optimizations_result.data)
-            optimizations_total_size = sum(opt.get("file_size_bytes", 0) for opt in optimizations_result.data)
+            processed_images_count = len(processed_images_result.data)
+            processed_images_total_size = sum(img.get("file_size_bytes", 0) for img in processed_images_result.data)
             
-            total_size = original_total_size + optimizations_total_size
+            total_size = original_total_size + processed_images_total_size
             
             return {
                 "success": True,
@@ -355,9 +353,9 @@ class PersistentStorage:
                     "original_images_count": original_images_count,
                     "original_total_size_bytes": original_total_size,
                     "original_total_size_mb": round(original_total_size / (1024 * 1024), 2),
-                    "optimizations_count": optimizations_count,
-                    "optimizations_total_size_bytes": optimizations_total_size,
-                    "optimizations_total_size_mb": round(optimizations_total_size / (1024 * 1024), 2),
+                    "processed_images_count": processed_images_count,
+                    "processed_images_total_size_bytes": processed_images_total_size,
+                    "processed_images_total_size_mb": round(processed_images_total_size / (1024 * 1024), 2),
                     "total_size_bytes": total_size,
                     "total_size_mb": round(total_size / (1024 * 1024), 2)
                 }

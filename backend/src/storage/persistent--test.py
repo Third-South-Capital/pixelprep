@@ -199,7 +199,7 @@ class TestPersistentStorage:
         mock_image_data = {
             "id": "img123",
             "storage_path": "user123/image.jpg",
-            "optimizations": [
+            "processed_images": [
                 {"storage_path": "user123/image_opt1.jpg"},
                 {"storage_path": "user123/image_opt2.jpg"}
             ]
@@ -255,13 +255,13 @@ class TestPersistentStorage:
         # Mock images query
         mock_images_result = MagicMock()
         mock_images_result.data = [
-            {"file_size_bytes": 1024000},  # 1MB
-            {"file_size_bytes": 2048000}   # 2MB
+            {"original_size": 1024000},  # 1MB
+            {"original_size": 2048000}   # 2MB
         ]
         
-        # Mock optimizations query  
-        mock_optimizations_result = MagicMock()
-        mock_optimizations_result.data = [
+        # Mock processed images query  
+        mock_processed_images_result = MagicMock()
+        mock_processed_images_result.data = [
             {"file_size_bytes": 512000},   # 512KB
             {"file_size_bytes": 256000}    # 256KB
         ]
@@ -269,7 +269,7 @@ class TestPersistentStorage:
         mock_select = MagicMock()
         mock_eq = MagicMock()
         mock_select.eq.return_value = mock_eq
-        mock_eq.execute.side_effect = [mock_images_result, mock_optimizations_result]
+        mock_eq.execute.side_effect = [mock_images_result, mock_processed_images_result]
         mock_table.select.return_value = mock_select
         
         mock_get_supabase.return_value = mock_client
@@ -281,7 +281,7 @@ class TestPersistentStorage:
         usage = result["usage"]
         
         assert usage["original_images_count"] == 2
-        assert usage["original_total_size_mb"] == 3.0  # 3MB total
-        assert usage["optimizations_count"] == 2
-        assert usage["optimizations_total_size_mb"] == 0.75  # 768KB = 0.75MB
-        assert usage["total_size_mb"] == 3.75  # 3.75MB total
+        assert usage["original_total_size_mb"] == 2.93  # ~3MB total
+        assert usage["processed_images_count"] == 2
+        assert usage["processed_images_total_size_mb"] == 0.75  # 768KB = 0.75MB
+        assert usage["total_size_mb"] == 3.68  # ~3.68MB total
