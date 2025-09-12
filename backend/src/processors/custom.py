@@ -50,12 +50,14 @@ class CustomProcessor(BaseProcessor):
         
         # Resize to target dimensions with smart cropping if needed
         if image.size != (self.target_width, self.target_height):
-            # First try smart crop to match aspect ratio
             target_ratio = self.target_width / self.target_height
             current_ratio = image.size[0] / image.size[1]
             
             if abs(target_ratio - current_ratio) > 0.1:  # Different aspect ratios
+                # Smart crop to match aspect ratio, then resize to target dimensions
                 image = self._smart_crop(image, self.target_width, self.target_height)
+                # After cropping, resize to exact target dimensions
+                image = self._resize_with_quality(image, self.target_width, self.target_height)
             else:
                 # Similar aspect ratios, just resize
                 image = self._resize_with_quality(image, self.target_width, self.target_height)

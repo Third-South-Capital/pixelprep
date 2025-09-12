@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from .optimize import router as optimize_router
+from .auth import router as auth_router
 
 app = FastAPI(
     title="PixelPrep API",
@@ -20,6 +21,9 @@ app.add_middleware(
 
 # Include optimization endpoints
 app.include_router(optimize_router)
+
+# Include authentication endpoints
+app.include_router(auth_router)
 
 @app.get("/health")
 async def health_check():
