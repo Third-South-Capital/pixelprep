@@ -68,23 +68,6 @@ function App() {
       if (!isZip) {
         optimizedImageUrl = URL.createObjectURL(blob);
       }
-      
-      // Trigger download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      
-      if (isZip) {
-        a.download = `optimized_${uploadState.file.name.replace(/\.[^/.]+$/, '')}_${uploadState.preset}.zip`;
-      } else {
-        const extension = metadata.metadata.format.toLowerCase();
-        a.download = `${uploadState.file.name.replace(/\.[^/.]+$/, '')}_${uploadState.preset}.${extension}`;
-      }
-      
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
 
       setUploadState(prev => ({ 
         ...prev, 

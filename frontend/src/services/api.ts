@@ -76,7 +76,8 @@ class ApiService {
       processor_config: {
         name: this.getPresetDisplayName(preset),
         description: this.getPresetDescription(preset),
-        aspect_ratio: 'Preserved'
+        aspect_ratio: 'Preserved',
+        use_case: this.getPresetUseCase(preset)
       },
       metadata: {
         file_size_bytes: fileSize,
@@ -155,6 +156,17 @@ class ApiService {
       'quick_compress': 0.7         // Light compression maintaining quality
     };
     return ratios[preset] || 0.5;
+  }
+
+  private getPresetUseCase(preset: PresetName): string {
+    const useCases = {
+      'instagram_square': 'Social media posts, portfolio sharing, engagement',
+      'jury_submission': 'Art competitions, gallery submissions, professional portfolios',
+      'web_display': 'Websites, online portfolios, blog posts',
+      'email_newsletter': 'Email campaigns, newsletters, attachments',
+      'quick_compress': 'File sharing, storage optimization, faster uploads'
+    };
+    return useCases[preset] || 'General image optimization';
   }
 
   validateFile(file: File): { isValid: boolean; error?: string } {

@@ -60,12 +60,13 @@ function DownloadButton({ blob, filename, isZip }: { blob: Blob; filename: strin
   return (
     <button
       onClick={handleDownload}
-      className="group bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
+      className="group relative bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-12 py-5 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center border-2 border-emerald-400 hover:border-emerald-300"
     >
-      <svg className="w-5 h-5 mr-2 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+      <svg className="w-6 h-6 mr-3 group-hover:animate-bounce relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      Download {isZip ? 'ZIP' : 'Image'}
+      <span className="relative z-10">Download {isZip ? 'ZIP' : 'Optimized Image'}</span>
     </button>
   );
 
@@ -114,7 +115,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
         <h2 className="text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
           Optimization Complete!
         </h2>
-        <p className="text-xl text-gray-700">Your artwork has been professionally optimized and downloaded automatically</p>
+        <p className="text-xl text-gray-700">Your artwork has been professionally optimized and is ready to download</p>
         <div className="mt-4 inline-block bg-emerald-100 rounded-full px-4 py-2">
           <p className="text-sm font-medium text-emerald-800">✨ Ready to wow your audience</p>
         </div>
@@ -127,62 +128,62 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Original File */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
-            <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <div className="w-4 h-4 bg-blue-400 rounded-full mr-3 animate-pulse"></div>
+          <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-blue-100 min-h-[280px] flex flex-col">
+            <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+              <div className="w-5 h-5 bg-blue-400 rounded-full mr-3 animate-pulse"></div>
               Original Artwork
             </h4>
-            <div className="space-y-3">
-              <div className="bg-blue-50 rounded-lg p-3">
+            <div className="space-y-4 flex-grow">
+              <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Filename:</span>
-                  <span className="font-mono text-sm text-right break-all max-w-xs">{originalFile.name}</span>
+                  <span className="text-gray-700 font-semibold">Filename:</span>
+                  <span className="font-mono text-sm text-right break-all max-w-xs text-blue-800">{originalFile.name}</span>
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-lg p-3">
+              <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">File size:</span>
+                  <span className="text-gray-700 font-semibold">File size:</span>
                   <span className="font-mono text-lg font-bold text-blue-600">{formatFileSize(originalFile.size)}</span>
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-lg p-3">
+              <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Format:</span>
-                  <span className="font-mono text-gray-800">{originalFile.type.split('/')[1]?.toUpperCase() || 'Unknown'}</span>
+                  <span className="text-gray-700 font-semibold">Format:</span>
+                  <span className="font-mono text-blue-800 font-medium">{originalFile.type.split('/')[1]?.toUpperCase() || 'Unknown'}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Optimized Result */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
-            <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <div className="w-4 h-4 bg-emerald-400 rounded-full mr-3 animate-pulse"></div>
+          <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-emerald-100 min-h-[280px] flex flex-col">
+            <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+              <div className="w-5 h-5 bg-emerald-400 rounded-full mr-3 animate-pulse"></div>
               Optimized Result
             </h4>
-            <div className="space-y-3">
-              <div className="bg-emerald-50 rounded-lg p-3">
+            <div className="space-y-4 flex-grow">
+              <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Preset used:</span>
+                  <span className="text-gray-700 font-semibold">Preset used:</span>
                   <span className="font-bold text-emerald-600">{result.processor_config.name}</span>
                 </div>
               </div>
-              <div className="bg-emerald-50 rounded-lg p-3">
+              <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">{result.metadata.format === 'ZIP' ? 'Optimized size:' : 'File size:'}:</span>
+                  <span className="text-gray-700 font-semibold">{result.metadata.format === 'ZIP' ? 'Optimized size:' : 'File size:'}:</span>
                   <span className="font-mono text-lg font-bold text-emerald-600">{formatFileSize(result.metadata.file_size_bytes)}</span>
                 </div>
               </div>
-              <div className="bg-emerald-50 rounded-lg p-3">
+              <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Format:</span>
-                  <span className="font-mono text-gray-800">{result.metadata.format}</span>
+                  <span className="text-gray-700 font-semibold">Format:</span>
+                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.format}</span>
                 </div>
               </div>
-              <div className="bg-emerald-50 rounded-lg p-3">
+              <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Dimensions:</span>
-                  <span className="font-mono text-gray-800">{result.metadata.dimensions}</span>
+                  <span className="text-gray-700 font-semibold">Dimensions:</span>
+                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.dimensions}</span>
                 </div>
               </div>
             </div>
@@ -326,35 +327,42 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+      <div className="space-y-8">
+        {/* Primary Download Button */}
         {optimizedBlob && (
-          <DownloadButton 
-            blob={optimizedBlob}
-            filename={isZip 
-              ? `optimized_${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.zip`
-              : `${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.${result.metadata.format.toLowerCase()}`
-            }
-            isZip={isZip}
-          />
+          <div className="flex justify-center">
+            <DownloadButton 
+              blob={optimizedBlob}
+              filename={isZip 
+                ? `optimized_${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.zip`
+                : `${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.${result.metadata.format.toLowerCase()}`
+              }
+              isZip={isZip}
+            />
+          </div>
         )}
-        <button
-          onClick={onReset}
-          className="group bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2 group-hover:animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Optimize Another Artwork
-        </button>
-        <button
-          onClick={() => window.location.reload()}
-          className="group bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-          Start Fresh
-        </button>
+        
+        {/* Secondary Actions */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button
+            onClick={onReset}
+            className="group bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-8 py-3 rounded-2xl font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Optimize Another Artwork
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="group bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-8 py-3 rounded-2xl font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Start Fresh
+          </button>
+        </div>
       </div>
     </div>
   );
