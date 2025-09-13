@@ -3,13 +3,14 @@
 <!--
 User Context: ../CONTEXT.md
 Last Updated: 2025-09-13
-Status: PRODUCTION LIVE ✅ v2.0.1
+Status: PRODUCTION LIVE ✅ v2.0.2
 Phase 1: COMPLETED ✅ (5 presets, 60+ tests)
 Phase 2: COMPLETED ✅ (Database integration validated 100%)
 Phase 3: COMPLETED ✅ (Frontend deployed & live)
 Phase 4: COMPLETED ✅ (EntryThingy design system integration)
-Hotfix: DEPLOYED ✅ (Accurate file size reporting fix)
-Current: Live production system with accurate file size reporting
+Hotfix v2.0.1: DEPLOYED ✅ (Accurate file size reporting fix)
+Hotfix v2.0.2: DEPLOYED ✅ (Contradictory auth state display fix)
+Current: Live production system with consistent auth messaging
 -->
 
 This file provides guidance to Claude Code when working with PixelPrep.
@@ -24,7 +25,7 @@ PixelPrep is a freemium image optimization tool for artists who need to resize/o
 ## 🚀 Production Deployment (LIVE)
 - **Live Frontend**: https://third-south-capital.github.io/pixelprep/
 - **Backend API**: https://pixelprep.onrender.com/
-- **Status**: Production Live v2.0.1 - Serving Users
+- **Status**: Production Live v2.0.2 - Serving Users
 - **Last Updated**: 2025-09-13
 - **Health Check**: Backend /health, Frontend responsive UI
 - **User Flow**: Anonymous upload → optimize → download (working)
@@ -177,6 +178,57 @@ just dev        # Start uvicorn dev server on :8000
 - Test with various image formats and sizes
 - Test edge cases: huge files, tiny files, corrupted images
 - Performance benchmarks (aim for <2 second processing)
+
+## v2.0.2 Hotfix: Auth State Display ✅ DEPLOYED (2025-09-13)
+
+### 🐛 Issue Identified
+Frontend simultaneously displayed contradictory auth messages causing user confusion:
+- **"Free unlimited access - no sign-up required"** (when AUTH_REQUIRED=false)
+- **"Free limit reached"** (when local usage count ≥ 1)
+
+Both messages appeared at the same time, creating confusion about actual access restrictions.
+
+### 🔧 Root Cause Analysis
+1. **Backend Environment Issue**:
+   - Missing `SUPABASE_JWT_SECRET` env var caused `/auth/health` endpoint failures
+   - Frontend couldn't get proper auth configuration from backend
+
+2. **Frontend Logic Contradictions**:
+   - Usage limit logic applied regardless of auth requirements
+   - Two separate display conditions that could both evaluate to true
+   - Backward logic: usage tracking loaded when auth was NOT required
+
+### 🔧 Fix Implementation
+**Backend Environment Fix**:
+```env
+# Added missing JWT secret for proper auth health endpoint
+SUPABASE_JWT_SECRET=pixelprep_dev_secret_2025
+```
+
+**Frontend Logic Fixes (`App.tsx`)**:
+- Fixed `hasExceededFreeLimit = authRequired && !user && usageCount >= 1`
+- Updated usage tracking to only occur when `AUTH_REQUIRED=true`
+- Corrected initial usage count loading logic
+- Fixed user sign-out and logout handlers to respect auth requirements
+
+### ✅ Technical Result
+**When `AUTH_REQUIRED=false` (current production setting)**:
+- ✅ Shows only "Free unlimited access - no sign-up required"
+- ✅ Never shows "Free limit reached" message
+- ✅ No usage tracking or limits applied
+- ✅ Users can optimize unlimited images without authentication
+
+**When `AUTH_REQUIRED=true`**:
+- ✅ Usage tracking and limits apply normally
+- ✅ Shows "Free limit reached" after first optimization
+- ✅ Login prompts work correctly
+
+### 🚀 Deployment Status
+- ✅ **Committed**: 85f2e2f - `fix: resolve contradictory auth state display messages`
+- ✅ **Frontend**: Auto-deployed via GitHub Pages
+- ⚠️  **Backend**: Requires manual env var update on Render.com
+- ✅ **Build**: Frontend production build successful
+- ✅ **Auth Health**: `{"auth_required": false, "auth_enabled": true, "mode": "anonymous_optional"}`
 
 ## v2.0.1 Hotfix: File Size Reporting ✅ DEPLOYED (2025-09-13)
 
