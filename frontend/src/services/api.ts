@@ -1,18 +1,19 @@
 import type { ProcessorsResponse, OptimizationResult, ApiError, PresetName } from '../types';
-import { storageService } from './storage';
+import { authService } from './auth';
 
 const API_BASE_URL = import.meta.env.PROD
   ? 'https://pixelprep.onrender.com'
   : 'http://localhost:8000';
 
 class ApiService {
-  private getAuthHeaders(): HeadersInit {
-    const token = storageService.getAuthToken();
+  private async getAuthHeaders(): Promise<HeadersInit> {
+    const token = await authService.getAccessToken();
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }
   async getProcessors(): Promise<ProcessorsResponse> {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/optimize/processors`, {
-      headers: this.getAuthHeaders()
+      headers
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch processors: ${response.status}`);
@@ -30,9 +31,10 @@ class ApiService {
     formData.append('preset', preset);
 
     const format = includeMetadata ? 'zip' : 'image';
+    const headers = await this.getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/optimize/?format=${format}`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      headers,
       body: formData,
     });
 
@@ -222,10 +224,11 @@ class ApiService {
 
   // Authenticated user methods
   async getUserImages(limit: number = 20, offset: number = 0) {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(
       `${API_BASE_URL}/optimize/images?limit=${limit}&offset=${offset}`,
       {
-        headers: this.getAuthHeaders()
+        headers
       }
     );
 
@@ -237,9 +240,10 @@ class ApiService {
   }
 
   async deleteImage(imageId: string) {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/optimize/images/${imageId}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders()
+      headers
     });
 
     if (!response.ok) {
@@ -250,8 +254,9 @@ class ApiService {
   }
 
   async getUserUsage() {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/optimize/usage`, {
-      headers: this.getAuthHeaders()
+      headers
     });
 
     if (!response.ok) {

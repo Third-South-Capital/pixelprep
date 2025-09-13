@@ -22,12 +22,16 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)
 
-# JWT Configuration
+# JWT Configuration (for custom tokens - legacy)
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 )
+
+# Supabase Configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://zhxhuzcbsvumopxnhfxm.supabase.co")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "bPWj9/QsRxr4NRQXJ6c/Bg5yAEyBhiN6//kkFvnKlzGc4qBnbsT+DpS0WVP1VE0d9KLgKHrT9jxU8bWmJ3qvhQ==")
 
 # GitHub OAuth Configuration
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
@@ -74,6 +78,41 @@ def create_access_token(
     return encoded_jwt
 
 
+def verify_supabase_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> TokenData:
+    """Verify Supabase JWT token and return user data."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        # Decode Supabase JWT token
+        payload = jwt.decode(
+            credentials.credentials,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated"
+        )
+
+        user_id: str = payload.get("sub")
+        email: str = payload.get("email")
+
+        if user_id is None:
+            raise credentials_exception
+
+        print(f"🔍 [SUPABASE JWT] Verified token for user: {email} (ID: {user_id})")
+
+        token_data = TokenData(user_id=user_id, email=email)
+        return token_data
+
+    except JWTError as e:
+        print(f"🔍 [SUPABASE JWT] Token verification failed: {str(e)}")
+        raise credentials_exception
+
+# Legacy custom token verification (kept for compatibility)
 def verify_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> TokenData:
@@ -101,7 +140,7 @@ def verify_token(
         raise credentials_exception
 
 
-async def get_current_user(token_data: TokenData = Depends(verify_token)) -> User:
+async def get_current_user(token_data: TokenData = Depends(verify_supabase_token)) -> User:
     """Get current user from token data."""
     try:
         supabase = get_supabase_client()
@@ -129,6 +168,36 @@ async def get_current_user(token_data: TokenData = Depends(verify_token)) -> Use
         )
 
 
+def verify_optional_supabase_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
+) -> TokenData | None:
+    """Verify Supabase JWT token optionally (returns None if no token provided)."""
+    if credentials is None:
+        return None
+
+    try:
+        # Decode Supabase JWT token
+        payload = jwt.decode(
+            credentials.credentials,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated"
+        )
+        user_id: str = payload.get("sub")
+        email: str = payload.get("email")
+
+        if user_id is None:
+            return None
+
+        print(f"🔍 [SUPABASE JWT OPTIONAL] Verified token for user: {email}")
+
+        return TokenData(user_id=user_id, email=email)
+
+    except JWTError as e:
+        print(f"🔍 [SUPABASE JWT OPTIONAL] Token verification failed: {str(e)}")
+        return None
+
+# Legacy optional token verification
 def verify_optional_token(
     credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
 ) -> TokenData | None:
@@ -153,7 +222,7 @@ def verify_optional_token(
 
 
 async def get_current_user_optional(
-    token_data: TokenData | None = Depends(verify_optional_token),
+    token_data: TokenData | None = Depends(verify_optional_supabase_token),
 ) -> User | None:
     """Get current user from token data, or None if not authenticated."""
     if token_data is None:

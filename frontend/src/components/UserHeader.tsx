@@ -1,16 +1,8 @@
 import { useState } from 'react';
-import { authService } from '../services/auth';
-
-interface User {
-  id: string;
-  email: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  github_username: string;
-}
+import { authService, type PixelPrepUser } from '../services/auth';
 
 interface UserHeaderProps {
-  user: User;
+  user: PixelPrepUser;
   onLogout: () => void;
 }
 
@@ -21,7 +13,7 @@ export function UserHeader({ user, onLogout }: UserHeaderProps) {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await authService.logout();
+      await authService.signOut();
       onLogout();
     } catch (error) {
       console.error('Logout failed:', error);

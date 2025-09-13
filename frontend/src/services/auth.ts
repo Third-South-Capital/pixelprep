@@ -1,158 +1,169 @@
-import { storageService, type AuthData } from './storage';
+import { supabase } from './supabase';
+import { storageService } from './storage';
+import type { User, Session } from '@supabase/supabase-js';
 
-const API_BASE_URL = import.meta.env.PROD
-  ? 'https://pixelprep.onrender.com'
-  : 'http://localhost:8000';
-
-interface AuthUrlResponse {
-  auth_url: string;
-  state: string;
-}
-
-interface User {
+interface PixelPrepUser {
   id: string;
   email: string;
   display_name: string | null;
   avatar_url: string | null;
   github_username: string;
-  subscription_tier: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface LoginSuccessResponse {
-  access_token: string;
-  token_type: 'bearer';
-  expires_in: number;
-  user: User;
 }
 
 class AuthService {
-  async getLoginUrl(): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/auth/github/login`);
-    if (!response.ok) {
-      throw new Error('Failed to get login URL');
-    }
+  private authStateListeners: ((user: PixelPrepUser | null) => void)[] = [];
 
-    const data: AuthUrlResponse = await response.json();
-    return data.auth_url;
+  constructor() {
+    // Listen for auth state changes from Supabase
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔍 [SUPABASE AUTH] State change:', event, session?.user?.email || 'no user');
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Clear usage count when user successfully authenticates
+        storageService.resetUsage();
+
+        // Notify listeners with user data
+        const pixelPrepUser = this.convertSupabaseUser(session.user);
+        this.authStateListeners.forEach(listener => listener(pixelPrepUser));
+      } else if (event === 'SIGNED_OUT') {
+        // Notify listeners that user signed out
+        this.authStateListeners.forEach(listener => listener(null));
+      }
+    });
   }
 
-  async handleCallback(code: string, state: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/auth/github/callback?code=${code}&state=${state}`);
+  async signInWithGitHub(): Promise<void> {
+    console.log('🔍 [SUPABASE AUTH] Initiating GitHub OAuth');
 
-    if (!response.ok) {
-      throw new Error('Authentication failed');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) {
+      console.error('🔍 [SUPABASE AUTH] GitHub OAuth error:', error);
+      throw new Error(`GitHub authentication failed: ${error.message}`);
     }
-
-    const data: LoginSuccessResponse = await response.json();
-
-    // Calculate expiration time
-    const expiresAt = Date.now() + (data.expires_in * 1000);
-
-    const authData: AuthData = {
-      token: data.access_token,
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        display_name: data.user.display_name,
-        avatar_url: data.user.avatar_url,
-        github_username: data.user.github_username
-      },
-      expires_at: expiresAt
-    };
-
-    storageService.saveAuth(authData);
-
-    // Clear usage count when user successfully authenticates
-    storageService.resetUsage();
   }
 
-  async getCurrentUser(): Promise<User | null> {
-    const token = storageService.getAuthToken();
-    if (!token) return null;
+  async signOut(): Promise<void> {
+    console.log('🔍 [SUPABASE AUTH] Signing out');
+    const { error } = await supabase.auth.signOut();
 
+    if (error) {
+      console.error('🔍 [SUPABASE AUTH] Sign out error:', error);
+      throw new Error(`Sign out failed: ${error.message}`);
+    }
+  }
+
+  async getCurrentUser(): Promise<PixelPrepUser | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (!response.ok) {
-        // Token might be invalid, clear auth
-        storageService.clearAuth();
+      if (!session?.user) {
         return null;
       }
 
-      return await response.json();
-    } catch {
-      // Network error or invalid response
+      return this.convertSupabaseUser(session.user);
+    } catch (error) {
+      console.error('🔍 [SUPABASE AUTH] Get current user error:', error);
       return null;
     }
   }
 
-  async logout(): Promise<void> {
-    const token = storageService.getAuthToken();
-
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      } catch {
-        // Logout endpoint might fail, but we still clear local storage
-      }
+  async getSession(): Promise<Session | null> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    } catch (error) {
+      console.error('🔍 [SUPABASE AUTH] Get session error:', error);
+      return null;
     }
-
-    storageService.clearAuth();
   }
 
-  redirectToLogin(): void {
-    this.getLoginUrl().then(url => {
-      window.location.href = url;
-    }).catch(error => {
-      console.error('Failed to redirect to login:', error);
-    });
+  async getAccessToken(): Promise<string | null> {
+    const session = await this.getSession();
+    return session?.access_token || null;
   }
 
   isAuthenticated(): boolean {
-    return storageService.isAuthenticated();
+    // We'll check this synchronously by checking if we have a cached session
+    // This is used for immediate UI decisions
+    return Boolean(this.getCachedUser());
   }
 
-  getUser(): { id: string; email: string; display_name: string | null; avatar_url: string | null; github_username: string } | null {
-    const auth = storageService.getAuth();
-    return auth?.user || null;
+  getUser(): PixelPrepUser | null {
+    return this.getCachedUser();
   }
 
-  getToken(): string | null {
-    return storageService.getAuthToken();
-  }
-
-  // Check URL for OAuth callback parameters
-  checkForAuthCallback(): { code: string; state: string } | null {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (code && state) {
-      return { code, state };
+  private getCachedUser(): PixelPrepUser | null {
+    // Get the current session synchronously from Supabase's internal cache
+    // This is safe to call synchronously after auth state has been established
+    try {
+      // Check localStorage directly for session (Supabase stores session here)
+      const storedSession = localStorage.getItem('sb-zhxhuzcbsvumopxnhfxm-auth-token');
+      if (storedSession) {
+        const parsed = JSON.parse(storedSession);
+        if (parsed.user) {
+          return this.convertSupabaseUser(parsed.user);
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
     }
-
     return null;
   }
 
-  // Clean up URL after processing callback
-  cleanupCallbackUrl(): void {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('code');
-    url.searchParams.delete('state');
-    window.history.replaceState({}, document.title, url.toString());
+  onAuthStateChange(callback: (user: PixelPrepUser | null) => void): () => void {
+    this.authStateListeners.push(callback);
+
+    // Immediately call with current user state
+    const currentUser = this.getCachedUser();
+    callback(currentUser);
+
+    // Return unsubscribe function
+    return () => {
+      const index = this.authStateListeners.indexOf(callback);
+      if (index > -1) {
+        this.authStateListeners.splice(index, 1);
+      }
+    };
+  }
+
+  private convertSupabaseUser(user: User): PixelPrepUser {
+    // Extract GitHub info from user metadata
+    const githubUsername = user.user_metadata?.user_name ||
+                          user.user_metadata?.preferred_username ||
+                          user.email?.split('@')[0] ||
+                          'user';
+
+    const displayName = user.user_metadata?.full_name ||
+                       user.user_metadata?.name ||
+                       user.user_metadata?.display_name ||
+                       githubUsername;
+
+    const avatarUrl = user.user_metadata?.avatar_url ||
+                     user.user_metadata?.picture ||
+                     `https://github.com/${githubUsername}.png`;
+
+    return {
+      id: user.id,
+      email: user.email || '',
+      display_name: displayName,
+      avatar_url: avatarUrl,
+      github_username: githubUsername
+    };
+  }
+
+  // Legacy method compatibility - now just redirects to Supabase OAuth
+  redirectToLogin(): void {
+    this.signInWithGitHub().catch(error => {
+      console.error('Failed to redirect to login:', error);
+    });
   }
 }
 
 export const authService = new AuthService();
-export type { User, AuthUrlResponse, LoginSuccessResponse };
+export type { PixelPrepUser };

@@ -12,7 +12,8 @@ export function LoginPrompt({ onClose, usageCount }: LoginPromptProps) {
   const handleLogin = async () => {
     setIsLoggingIn(true);
     try {
-      authService.redirectToLogin();
+      await authService.signInWithGitHub();
+      // The onAuthStateChange callback will handle closing the modal
     } catch (error) {
       console.error('Login failed:', error);
       setIsLoggingIn(false);

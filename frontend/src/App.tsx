@@ -7,7 +7,7 @@ import { Figmaman } from './components/Figmaman';
 import { LoginPrompt } from './components/LoginPrompt';
 import { UserHeader } from './components/UserHeader';
 import { apiService } from './services/api';
-import { authService } from './services/auth';
+import { authService, type PixelPrepUser } from './services/auth';
 import { storageService } from './services/storage';
 import type { UploadState, ProcessorsResponse, PresetName } from './types';
 
@@ -23,12 +23,14 @@ function App() {
   });
 
   // Authentication state
-  const [user, setUser] = useState<{ id: string; email: string; display_name: string | null; avatar_url: string | null; github_username: string } | null>(null);
+  const [user, setUser] = useState<PixelPrepUser | null>(null);
   const [usageCount, setUsageCount] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     // Initialize the app
     const initializeApp = async () => {
       try {
@@ -36,29 +38,24 @@ function App() {
         const processorsData = await apiService.getProcessors();
         setProcessors(processorsData);
 
-        // Check for OAuth callback
-        const callbackParams = authService.checkForAuthCallback();
-        if (callbackParams) {
-          setIsAuthenticating(true);
-          try {
-            await authService.handleCallback(callbackParams.code, callbackParams.state);
-            authService.cleanupCallbackUrl();
+        // Set up Supabase auth state listener
+        unsubscribe = authService.onAuthStateChange((user) => {
+          console.log('🔍 [AUTH STATE] User changed:', user?.email || 'anonymous');
+          setUser(user);
 
-            // Load user data after successful auth
-            const userData = authService.getUser();
-            setUser(userData);
-          } catch (error) {
-            console.error('Authentication failed:', error);
-          } finally {
-            setIsAuthenticating(false);
+          // If user signed out, reload usage count
+          if (!user) {
+            const currentUsage = storageService.getUsageCount();
+            setUsageCount(currentUsage);
+            console.log('🔍 [DEBUG] User signed out, usage count:', currentUsage);
+          } else {
+            // User signed in, close any login prompts
+            setShowLoginPrompt(false);
+            console.log('🔍 [DEBUG] User signed in, closing prompts');
           }
-        } else {
-          // Check if user is already authenticated
-          const userData = authService.getUser();
-          setUser(userData);
-        }
+        });
 
-        // Load usage count for anonymous users
+        // Load initial usage count for anonymous users
         if (!authService.isAuthenticated()) {
           const currentUsage = storageService.getUsageCount();
           setUsageCount(currentUsage);
@@ -66,12 +63,22 @@ function App() {
         } else {
           console.log('🔍 [DEBUG] User is already authenticated');
         }
+
+        setIsInitializing(false);
       } catch (error) {
         console.error('App initialization failed:', error);
+        setIsInitializing(false);
       }
     };
 
     initializeApp();
+
+    // Cleanup on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const handleFileSelect = (file: File) => {
@@ -205,8 +212,8 @@ function App() {
     isAuthenticated: authService.isAuthenticated()
   });
 
-  // Show authentication loading screen
-  if (isAuthenticating) {
+  // Show initialization loading screen
+  if (isInitializing) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -220,8 +227,8 @@ function App() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Authenticating...</h2>
-          <p className="text-gray-600">Please wait while we log you in</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading PixelPrep...</h2>
+          <p className="text-gray-600">Setting up your workspace</p>
         </div>
       </div>
     );
