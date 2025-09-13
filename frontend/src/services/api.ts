@@ -1,7 +1,7 @@
 import type { ProcessorsResponse, OptimizationResult, ApiError, PresetName } from '../types';
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://pixelprep-api.onrender.com'
+  ? 'https://pixelprep.onrender.com'
   : 'http://localhost:8000';
 
 class ApiService {
