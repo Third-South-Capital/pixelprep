@@ -206,3 +206,106 @@ class TestOptimizeAPI:
         response = client.post("/optimize/", files=files)
         
         assert response.status_code == 422  # FastAPI validation error
+
+    def test_optimize_image_format_response(self):
+        """Test optimization with format=image returns direct image."""
+        image_buffer = self.create_test_image(size=(1200, 800))
+        
+        files = {"file": ("test.jpg", image_buffer, "image/jpeg")}
+        data = {"preset": "instagram_square"}
+        
+        response = client.post("/optimize/?format=image", files=files, data=data)
+        
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/jpeg"
+        assert "test_instagram_square.jpg" in response.headers.get("content-disposition", "")
+        
+        # Verify it's a valid JPEG image
+        image_data = response.content
+        processed_image = Image.open(io.BytesIO(image_data))
+        assert processed_image.format == 'JPEG'
+        assert processed_image.size == (1080, 1080)  # Instagram square dimensions
+        
+        # Check custom headers
+        assert response.headers.get("X-Original-Filename") == "test.jpg"
+        assert response.headers.get("X-Preset") == "instagram_square"
+        assert response.headers.get("X-File-Size")
+        assert response.headers.get("X-Dimensions") == "1080x1080"  # ASCII x, not Unicode ×
+
+    def test_optimize_zip_format_response(self):
+        """Test optimization with format=zip returns ZIP with metadata."""
+        image_buffer = self.create_test_image(size=(1200, 800))
+        
+        files = {"file": ("test.jpg", image_buffer, "image/jpeg")}
+        data = {"preset": "instagram_square"}
+        
+        response = client.post("/optimize/?format=zip", files=files, data=data)
+        
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+        assert "pixelprep_instagram_square.zip" in response.headers.get("content-disposition", "")
+        
+        # Same behavior as existing test - verify ZIP contents
+        zip_content = io.BytesIO(response.content)
+        with zipfile.ZipFile(zip_content, 'r') as zip_file:
+            files_in_zip = zip_file.namelist()
+            assert len(files_in_zip) == 2
+            assert "metadata.json" in files_in_zip
+            
+            metadata = json.loads(zip_file.read("metadata.json"))
+            assert metadata["preset"] == "instagram_square"
+            assert metadata["original_file"] == "test.jpg"
+
+    def test_optimize_format_parameter_default(self):
+        """Test that format parameter defaults to 'zip' when not specified."""
+        image_buffer = self.create_test_image()
+        
+        files = {"file": ("test.jpg", image_buffer, "image/jpeg")}
+        data = {"preset": "instagram_square"}
+        
+        response = client.post("/optimize/", files=files, data=data)
+        
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+
+    def test_optimize_web_display_image_format(self):
+        """Test web_display preset returns WebP format when format=image."""
+        image_buffer = self.create_test_image(size=(2000, 1500))
+        
+        files = {"file": ("test.jpg", image_buffer, "image/jpeg")}
+        data = {"preset": "web_display"}
+        
+        response = client.post("/optimize/?format=image", files=files, data=data)
+        
+        assert response.status_code == 200
+        # Web display should return WebP format
+        assert response.headers["content-type"] == "image/webp" or response.headers["content-type"] == "image/jpeg"
+        
+        # Check filename extension matches format
+        content_disposition = response.headers.get("content-disposition", "")
+        if response.headers["content-type"] == "image/webp":
+            assert ".webp" in content_disposition
+        else:
+            assert ".jpg" in content_disposition
+
+    def test_optimize_all_presets_both_formats(self):
+        """Test all presets work with both image and zip formats."""
+        presets = ["instagram_square", "jury_submission", "web_display", "email_newsletter", "quick_compress"]
+        formats = ["image", "zip"]
+        
+        for preset in presets:
+            for format_type in formats:
+                image_buffer = self.create_test_image(size=(1200, 800))
+                
+                files = {"file": ("test.jpg", image_buffer, "image/jpeg")}
+                data = {"preset": preset}
+                
+                response = client.post(f"/optimize/?format={format_type}", files=files, data=data)
+                
+                assert response.status_code == 200, f"Failed for preset {preset} with format {format_type}"
+                
+                if format_type == "image":
+                    assert response.headers["content-type"].startswith("image/")
+                    assert response.headers.get("X-Preset") == preset
+                else:
+                    assert response.headers["content-type"] == "application/zip"

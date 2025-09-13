@@ -2,8 +2,8 @@ import io
 import zipfile
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from typing import Dict, Any, Optional, Literal
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse
 from PIL import Image, UnidentifiedImageError
 from ..processors.instagram import InstagramSquareProcessor
@@ -34,12 +34,20 @@ MAX_FILE_SIZE_MB = 10
 async def optimize_image(
     file: UploadFile = File(..., description="Image file to optimize"),
     preset: str = Form(..., description="Preset to apply (e.g., 'instagram_square')"),
+    format: Literal["image", "zip"] = Query("zip", description="Response format: 'image' for direct image, 'zip' for image+metadata"),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     """
     Optimize an uploaded image using the specified preset.
     
-    Returns a ZIP file containing the optimized image(s).
+    Args:
+        file: Image file to optimize
+        preset: Optimization preset to apply
+        format: Response format - 'image' returns optimized image directly, 'zip' returns ZIP with image + metadata
+    
+    Returns:
+        - format=image: Optimized image file with appropriate Content-Type
+        - format=zip: ZIP file containing optimized image + metadata.json
     """
     try:
         # Validate preset
@@ -56,16 +64,19 @@ async def optimize_image(
         processor = PROCESSORS[preset]
         result = await _process_image(file, processor, current_user)
         
-        # Create ZIP response
-        zip_response = await _create_zip_response(result, preset)
-        
-        return StreamingResponse(
-            io.BytesIO(zip_response),
-            media_type="application/zip",
-            headers={
-                "Content-Disposition": f"attachment; filename=pixelprep_{preset}.zip"
-            }
-        )
+        if format == "image":
+            # Return optimized image directly
+            return await _create_image_response(result, preset)
+        else:
+            # Return ZIP with image + metadata
+            zip_response = await _create_zip_response(result, preset)
+            return StreamingResponse(
+                io.BytesIO(zip_response),
+                media_type="application/zip",
+                headers={
+                    "Content-Disposition": f"attachment; filename=pixelprep_{preset}.zip"
+                }
+            )
         
     except HTTPException:
         raise
@@ -215,6 +226,43 @@ async def _process_image(file: UploadFile, processor, current_user: Optional[Use
             status_code=500,
             detail=f"Image processing error: {str(e)}"
         )
+
+async def _create_image_response(result: Dict[str, Any], preset: str) -> StreamingResponse:
+    """Create direct image response with optimized image."""
+    original_name = result["original_filename"]
+    base_name = original_name.rsplit('.', 1)[0] if '.' in original_name else original_name
+    optimized_filename = f"{base_name}_{preset}.jpg"
+    
+    # Determine content type based on processor format
+    processor_config = result["processor_config"]
+    format_type = processor_config.get("primary_format", processor_config.get("format", "JPEG"))
+    
+    if format_type.upper() == "WEBP":
+        media_type = "image/webp"
+        file_ext = "webp"
+    else:
+        media_type = "image/jpeg" 
+        file_ext = "jpg"
+    
+    # Update filename extension
+    optimized_filename = f"{base_name}_{preset}.{file_ext}"
+    
+    # Convert dimensions to ASCII-safe format for headers
+    dimensions = result["metadata"].get("dimensions", "unknown")
+    if "×" in dimensions:
+        dimensions = dimensions.replace("×", "x")  # Replace Unicode × with ASCII x
+    
+    return StreamingResponse(
+        io.BytesIO(result["image_data"]),
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f"attachment; filename={optimized_filename}",
+            "X-Original-Filename": result["original_filename"],
+            "X-Preset": preset,
+            "X-File-Size": str(len(result["image_data"])),
+            "X-Dimensions": dimensions
+        }
+    )
 
 async def _create_zip_response(result: Dict[str, Any], preset: str) -> bytes:
     """Create ZIP file containing optimized image and metadata."""
