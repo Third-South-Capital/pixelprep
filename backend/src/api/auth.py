@@ -33,6 +33,7 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")  # For OAuth callback
 
 
 # Pydantic Models
@@ -195,13 +196,23 @@ async def github_login(request: Request):
     # Store state in session (in production, use Redis or database)
     # For now, we'll include it in the redirect and validate on callback
 
+    # Use configured backend URL instead of dynamic request.base_url
+    redirect_uri = f"{BACKEND_URL}/auth/github/callback"
+
+    # Debug logging
+    print(f"🔍 [OAUTH DEBUG] BACKEND_URL: {BACKEND_URL}")
+    print(f"🔍 [OAUTH DEBUG] redirect_uri: {redirect_uri}")
+    print(f"🔍 [OAUTH DEBUG] GITHUB_CLIENT_ID: {GITHUB_CLIENT_ID}")
+
     github_oauth_url = (
         f"https://github.com/login/oauth/authorize?"
         f"client_id={GITHUB_CLIENT_ID}&"
-        f"redirect_uri={request.base_url}auth/github/callback&"
+        f"redirect_uri={redirect_uri}&"
         f"scope=user:email&"
         f"state={state}"
     )
+
+    print(f"🔍 [OAUTH DEBUG] Generated OAuth URL: {github_oauth_url}")
 
     return {"auth_url": github_oauth_url, "state": state}
 
