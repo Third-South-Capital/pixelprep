@@ -1,4 +1,5 @@
 import io
+import logging
 import tempfile
 import zipfile
 from pathlib import Path
@@ -8,15 +9,19 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from fastapi.responses import StreamingResponse
 from PIL import Image, UnidentifiedImageError
 
+# Set up logging for API level file size tracking
+logger = logging.getLogger(__name__)
+
 from ..processors.instagram import InstagramSquareProcessor
 from ..storage.persistent import PersistentStorage
 from ..storage.temporary import TemporaryStorage
-from .auth import AUTH_REQUIRED, User, get_current_user, get_current_user_optional
+from .auth import AUTH_REQUIRED, CUSTOM_PRESETS_ENABLED, User, get_current_user, get_current_user_optional
 
 router = APIRouter(prefix="/optimize", tags=["optimization"])
 
 # Available processors
 from ..processors.compress import QuickCompressProcessor
+from ..processors.custom import create_custom_processor
 from ..processors.email import EmailNewsletterProcessor
 from ..processors.jury import JurySubmissionProcessor
 from ..processors.web import WebDisplayProcessor
@@ -36,12 +41,23 @@ MAX_FILE_SIZE_MB = 10
 @router.post("/")
 async def optimize_image(
     file: UploadFile = File(..., description="Image file to optimize"),
-    preset: str = Form(..., description="Preset to apply (e.g., 'instagram_square')"),
+    preset: str = Form(..., description="Preset to apply (e.g., 'instagram_square', 'custom')"),
     format: Literal["image", "zip"] = Query(
         "zip",
         description="Response format: 'image' for direct image, 'zip' for image+metadata",
     ),
     current_user: User | None = Depends(get_current_user_optional),
+    # Custom optimization parameters (optional)
+    custom_strategy: Literal["quality", "size"] = Form(
+        "quality", description="Custom optimization strategy: 'quality' or 'size'"
+    ),
+    custom_max_dimension: int = Form(
+        None, description="Maximum dimension constraint (width or height in pixels)"
+    ),
+    custom_width: int = Form(None, description="Target width in pixels (None for original)"),
+    custom_height: int = Form(None, description="Target height in pixels (None for original)"),
+    custom_max_size_mb: float = Form(5.0, description="Maximum file size in MB"),
+    custom_format: str = Form("JPEG", description="Output format for custom preset"),
 ):
     """
     Optimize an uploaded image using the specified preset.
@@ -56,18 +72,45 @@ async def optimize_image(
         - format=zip: ZIP file containing optimized image + metadata.json
     """
     try:
-        # Validate preset
-        if preset not in PROCESSORS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid preset '{preset}'. Available: {list(PROCESSORS.keys())}",
-            )
+        # Handle custom preset
+        if preset == "custom":
+            if not CUSTOM_PRESETS_ENABLED:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Custom presets are not enabled. Contact administrator to enable this feature.",
+                )
+
+            # Create custom processor with user parameters
+            try:
+                processor = create_custom_processor(
+                    width=custom_width,
+                    height=custom_height,
+                    max_size_mb=custom_max_size_mb,
+                    format=custom_format,
+                    strategy=custom_strategy,
+                    max_dimension=custom_max_dimension,
+                )
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid custom parameters: {str(e)}"
+                )
+        else:
+            # Validate preset
+            if preset not in PROCESSORS:
+                available_presets = list(PROCESSORS.keys())
+                if CUSTOM_PRESETS_ENABLED:
+                    available_presets.append("custom")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid preset '{preset}'. Available: {available_presets}",
+                )
+            processor = PROCESSORS[preset]
 
         # Validate file
         await _validate_upload_file(file)
 
         # Process the image
-        processor = PROCESSORS[preset]
         result = await _process_image(file, processor, current_user)
 
         if format == "image":

@@ -62,6 +62,9 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")  # For OAuth cal
 # Authentication Toggle - Controls whether auth is required for the app
 AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "false").lower() == "true"
 
+# Custom Presets Feature Flag - Controls whether custom optimization is available
+CUSTOM_PRESETS_ENABLED = os.getenv("CUSTOM_PRESETS_ENABLED", "false").lower() == "true"
+
 # Validate environment on module import (fail fast)
 AUTH_ENABLED = False
 try:

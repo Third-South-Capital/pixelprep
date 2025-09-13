@@ -1,4 +1,4 @@
-import type { ProcessorsResponse, OptimizationResult, ApiError, PresetName } from '../types';
+import type { ProcessorsResponse, OptimizationResult, ApiError, PresetName, CustomOptimization } from '../types';
 import { authService } from './auth';
 
 const API_BASE_URL = import.meta.env.PROD
@@ -58,11 +58,33 @@ class ApiService {
   async optimizeImage(
     file: File,
     preset: PresetName,
-    includeMetadata: boolean = true
+    includeMetadata: boolean = true,
+    customOptions?: CustomOptimization
   ): Promise<{ blob: Blob; metadata: OptimizationResult; isZip: boolean; originalFileSize?: number }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('preset', preset);
+
+    // Add custom parameters if preset is custom
+    if (preset === 'custom' && customOptions) {
+      formData.append('custom_strategy', customOptions.strategy);
+      formData.append('custom_max_size_mb', customOptions.maxSizeMb.toString());
+      formData.append('custom_format', customOptions.format);
+
+      // Handle dimension options
+      if (customOptions.maxDimension !== 'original') {
+        const dimension = parseInt(customOptions.maxDimension);
+        formData.append('custom_max_dimension', dimension.toString());
+      }
+
+      // Handle custom dimensions if specified
+      if (customOptions.customWidth) {
+        formData.append('custom_width', customOptions.customWidth.toString());
+      }
+      if (customOptions.customHeight) {
+        formData.append('custom_height', customOptions.customHeight.toString());
+      }
+    }
 
     const format = includeMetadata ? 'zip' : 'image';
     const response = await this.makeAuthenticatedRequest(`${API_BASE_URL}/optimize/?format=${format}`, {
@@ -183,7 +205,8 @@ class ApiService {
       'jury_submission': '1920px longest side',
       'web_display': '1920px wide',
       'email_newsletter': '600px wide',
-      'quick_compress': 'Original dimensions'
+      'quick_compress': 'Original dimensions',
+      'custom': 'Custom dimensions'
     };
     return dimensions[preset] || 'Optimized';
   }
@@ -194,7 +217,8 @@ class ApiService {
       'jury_submission': 'Jury Submission',
       'web_display': 'Web Display',
       'email_newsletter': 'Email Newsletter',
-      'quick_compress': 'Quick Compress'
+      'quick_compress': 'Quick Compress',
+      'custom': 'Custom Optimization'
     };
     return names[preset] || 'Optimized Image';
   }
@@ -205,7 +229,8 @@ class ApiService {
       'jury_submission': 'High-quality format for competition submissions',
       'web_display': 'Optimized for websites and portfolios',
       'email_newsletter': 'Lightweight format for email campaigns',
-      'quick_compress': 'Reduced file size while maintaining dimensions'
+      'quick_compress': 'Reduced file size while maintaining dimensions',
+      'custom': 'Custom optimization with your specific settings'
     };
     return descriptions[preset] || 'Image optimized successfully';
   }
@@ -217,7 +242,8 @@ class ApiService {
       'jury_submission': 0.6,       // High quality, moderate compression
       'web_display': 0.4,           // Balanced for web performance
       'email_newsletter': 0.2,      // Maximum compression for email
-      'quick_compress': 0.7         // Light compression maintaining quality
+      'quick_compress': 0.7,        // Light compression maintaining quality
+      'custom': 0.5                 // Default for custom settings
     };
     return ratios[preset] || 0.5;
   }
@@ -228,7 +254,8 @@ class ApiService {
       'jury_submission': 'Art competitions, gallery submissions, professional portfolios',
       'web_display': 'Websites, online portfolios, blog posts',
       'email_newsletter': 'Email campaigns, newsletters, attachments',
-      'quick_compress': 'File sharing, storage optimization, faster uploads'
+      'quick_compress': 'File sharing, storage optimization, faster uploads',
+      'custom': 'Tailored optimization for specific requirements'
     };
     return useCases[preset] || 'General image optimization';
   }

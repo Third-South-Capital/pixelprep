@@ -20,6 +20,7 @@ export interface ProcessorsResponse {
   total_count: number;
   supported_formats: string[];
   max_file_size_mb: number;
+  custom_presets_enabled?: boolean;
 }
 
 export interface OptimizationMetadata {
@@ -43,12 +44,28 @@ export interface ApiError {
   status_code: number;
 }
 
-export type PresetName = 
-  | 'instagram_square' 
-  | 'jury_submission' 
-  | 'web_display' 
-  | 'email_newsletter' 
-  | 'quick_compress';
+export type PresetName =
+  | 'instagram_square'
+  | 'jury_submission'
+  | 'web_display'
+  | 'email_newsletter'
+  | 'quick_compress'
+  | 'custom';
+
+export type OptimizationMode = 'presets' | 'custom';
+
+export type OptimizationStrategy = 'quality' | 'size';
+
+export type MaxDimension = 'original' | '800' | '1200' | '1920';
+
+export interface CustomOptimization {
+  strategy: OptimizationStrategy;
+  maxDimension: MaxDimension;
+  customWidth?: number;
+  customHeight?: number;
+  maxSizeMb: number;
+  format: string;
+}
 
 export interface ImageAnalysis {
   width: number;
@@ -71,6 +88,8 @@ export interface PresetRecommendation {
 export interface UploadState {
   file: File | null;
   preset: PresetName | null;
+  optimizationMode: OptimizationMode;
+  customOptimization?: CustomOptimization;
   isUploading: boolean;
   result: OptimizationResult | null;
   error: string | null;

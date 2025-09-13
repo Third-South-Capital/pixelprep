@@ -89,19 +89,33 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
                       ? 'border-blue-400 bg-blue-50 shadow-xl ring-2 ring-blue-200'
                       : 'border-accent-primary bg-secondary shadow-xl')
                   : (isRecommended
-                      ? 'border-blue-300 bg-blue-25 hover:border-blue-400 hover:bg-blue-50'
+                      ? 'border-blue-300 bg-blue-25 hover:border-blue-400 hover:bg-blue-50 animate-pulse hover:animate-none'
                       : 'border-primary bg-primary hover:border-accent-primary hover:bg-secondary')
                 }
+                ${!selectedPreset && isRecommended ? 'ring-2 ring-blue-300 ring-opacity-50 animate-pulse' : ''}
               `}
             >
-              {/* Recommendation Badge */}
+              {/* Recommendation Badge with Animation */}
               {isRecommended && (
                 <div className="absolute -top-2 -right-2 z-10">
-                  <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span>RECOMMENDED</span>
+                  <div className="relative">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                      <svg className="w-3 h-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      <span>BEST MATCH</span>
+                    </div>
+                    {/* Pulsing ring */}
+                    <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-40"></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quality Badge for high-confidence recommendations */}
+              {isRecommended && recommendation && recommendation.confidence >= 85 && (
+                <div className="absolute -top-1 -left-1 z-10">
+                  <div className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                    <span>★ {recommendation.confidence}%</span>
                   </div>
                 </div>
               )}
