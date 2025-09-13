@@ -1,6 +1,9 @@
 import io
 import json
+import tempfile
+import time
 import zipfile
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -129,12 +132,8 @@ class TestOptimizeAPI:
 
     def test_optimize_large_file(self):
         """Test optimization with file that's too large."""
-        # Create a large image (simulate >10MB)
-        # We'll create a smaller image but patch the size check
-        image_buffer = self.create_test_image(size=(100, 100))
-
-        # Create a buffer that's too large
-        large_buffer = io.BytesIO(b"0" * (11 * 1024 * 1024))  # 11MB of zeros
+        # Create a buffer that's too large (11MB of zeros)
+        large_buffer = io.BytesIO(b"0" * (11 * 1024 * 1024))
 
         files = {"file": ("large.jpg", large_buffer, "image/jpeg")}
         data = {"preset": "instagram_square"}
@@ -331,3 +330,88 @@ class TestOptimizeAPI:
                     assert response.headers.get("X-Preset") == preset
                 else:
                     assert response.headers["content-type"] == "application/zip"
+
+    def test_temporary_file_cleanup(self):
+        """Test that temporary files are properly cleaned up after processing."""
+        # Get the temp directory
+        temp_dir = tempfile.gettempdir()
+        temp_path = Path(temp_dir)
+
+        # Count existing temp files before test
+        initial_temp_files = set()
+        for pattern in ["tmp*", "pixelprep*", "*NamedTemporaryFile*"]:
+            initial_temp_files.update(temp_path.glob(pattern))
+
+        # Process multiple images to create temp files
+        for i in range(3):
+            image_buffer = self.create_test_image(size=(1200, 800))
+
+            files = {"file": (f"test_{i}.jpg", image_buffer, "image/jpeg")}
+            data = {"preset": "instagram_square"}
+
+            response = client.post("/optimize/", files=files, data=data)
+            assert response.status_code == 200
+
+        # Give a small delay for any cleanup operations
+        time.sleep(0.1)
+
+        # Count temp files after test
+        final_temp_files = set()
+        for pattern in ["tmp*", "pixelprep*", "*NamedTemporaryFile*"]:
+            final_temp_files.update(temp_path.glob(pattern))
+
+        # Check that no new temp files remain
+        new_temp_files = final_temp_files - initial_temp_files
+
+        # Filter out files that might be created by other processes
+        pixelprep_temp_files = [
+            f for f in new_temp_files
+            if any(keyword in f.name.lower() for keyword in ['pixelprep', 'tmp'])
+            and f.suffix in ['.jpg', '.jpeg', '.png', '.webp', '.tmp']
+        ]
+
+        assert len(pixelprep_temp_files) == 0, (
+            f"Found {len(pixelprep_temp_files)} uncleaned temporary files: "
+            f"{[str(f) for f in pixelprep_temp_files]}"
+        )
+
+    def test_temporary_file_cleanup_on_error(self):
+        """Test that temporary files are cleaned up even when processing fails."""
+        temp_dir = tempfile.gettempdir()
+        temp_path = Path(temp_dir)
+
+        # Count existing temp files before test
+        initial_temp_files = set()
+        for pattern in ["tmp*", "pixelprep*"]:
+            initial_temp_files.update(temp_path.glob(pattern))
+
+        # Try to process a corrupted image (should fail but clean up temp files)
+        corrupted_buffer = io.BytesIO(b"INVALID_IMAGE_DATA")
+
+        files = {"file": ("corrupted.jpg", corrupted_buffer, "image/jpeg")}
+        data = {"preset": "instagram_square"}
+
+        response = client.post("/optimize/", files=files, data=data)
+        assert response.status_code == 400  # Should fail
+
+        # Give a small delay for cleanup
+        time.sleep(0.1)
+
+        # Count temp files after failed processing
+        final_temp_files = set()
+        for pattern in ["tmp*", "pixelprep*"]:
+            final_temp_files.update(temp_path.glob(pattern))
+
+        new_temp_files = final_temp_files - initial_temp_files
+
+        # Filter for pixelprep-related temp files
+        pixelprep_temp_files = [
+            f for f in new_temp_files
+            if any(keyword in f.name.lower() for keyword in ['pixelprep', 'tmp'])
+            and f.suffix in ['.jpg', '.jpeg', '.png', '.webp', '.tmp']
+        ]
+
+        assert len(pixelprep_temp_files) == 0, (
+            f"Found {len(pixelprep_temp_files)} uncleaned temporary files after error: "
+            f"{[str(f) for f in pixelprep_temp_files]}"
+        )

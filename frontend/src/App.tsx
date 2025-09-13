@@ -66,26 +66,27 @@ function App() {
             console.log('🔍 [AUTH STATE] User changed:', user?.email || 'anonymous');
             setUser(user);
 
-            // If user signed out, reload usage count
-            if (!user) {
+            // If user signed out, reload usage count (only if auth is required)
+            if (!user && authConfig.auth_required) {
               const currentUsage = storageService.getUsageCount();
               setUsageCount(currentUsage);
               console.log('🔍 [DEBUG] User signed out, usage count:', currentUsage);
-            } else {
-              // User signed in, close any login prompts
+            } else if (user) {
+              // User signed in, close any login prompts and reset usage count
               setShowLoginPrompt(false);
+              setUsageCount(0);
               console.log('🔍 [DEBUG] User signed in, closing prompts');
             }
           });
         }
 
-        // Load initial usage count for anonymous users (if auth not required or not authenticated)
-        if (!authConfig.auth_required && (!authConfig.auth_enabled || !authService.isAuthenticated())) {
+        // Load initial usage count for anonymous users (only if auth is required)
+        if (authConfig.auth_required && authConfig.auth_enabled && !authService.isAuthenticated()) {
           const currentUsage = storageService.getUsageCount();
           setUsageCount(currentUsage);
           console.log('🔍 [DEBUG] Initial usage count:', currentUsage);
         } else {
-          console.log('🔍 [DEBUG] User is already authenticated');
+          console.log('🔍 [DEBUG] Auth not required or user authenticated - no usage tracking');
         }
 
         setIsInitializing(false);
@@ -191,25 +192,25 @@ function App() {
         isZip
       }));
 
-      // Track usage for anonymous users and show login prompt if needed (only if auth is enabled)
-      if (authEnabled && !authService.isAuthenticated()) {
+      // Track usage for anonymous users and show login prompt if needed (only if auth is required)
+      if (authRequired && authEnabled && !authService.isAuthenticated()) {
         const newUsageCount = storageService.incrementUsage();
         setUsageCount(newUsageCount);
         console.log('🔍 [DEBUG] Incremented usage count to:', newUsageCount);
         console.log('🔍 [DEBUG] localStorage content:', localStorage.getItem('pixelprep_usage'));
 
-        // Show login prompt after first optimization (only if auth is required)
-        if (authRequired && newUsageCount === 1) {
+        // Show login prompt after first optimization
+        if (newUsageCount === 1) {
           console.log('🔍 [DEBUG] First optimization completed - will show login prompt in 2 seconds');
           setTimeout(() => {
             console.log('🔍 [DEBUG] Showing login prompt now');
             setShowLoginPrompt(true);
           }, 2000); // Show prompt 2 seconds after successful optimization
         } else {
-          console.log('🔍 [DEBUG] Usage count is', newUsageCount, '- auth required:', authRequired);
+          console.log('🔍 [DEBUG] Usage count is', newUsageCount);
         }
       } else {
-        console.log('🔍 [DEBUG] User is authenticated or auth is disabled - no usage tracking needed');
+        console.log('🔍 [DEBUG] Auth not required or user authenticated - no usage tracking needed');
       }
     } catch (error) {
       setUploadState(prev => ({
@@ -245,7 +246,12 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
-    setUsageCount(storageService.getUsageCount());
+    // Only load usage count if auth is required
+    if (authRequired) {
+      setUsageCount(storageService.getUsageCount());
+    } else {
+      setUsageCount(0);
+    }
     setShowLoginPrompt(false);
   };
 
@@ -254,7 +260,8 @@ function App() {
   };
 
   // Check if user has exceeded free limit and should be blocked
-  const hasExceededFreeLimit = !user && usageCount >= 1;
+  // Only apply usage limits when auth is required; otherwise allow unlimited access
+  const hasExceededFreeLimit = authRequired && !user && usageCount >= 1;
 
   // Debug logging for state changes
   console.log('🔍 [DEBUG] Current state:', {

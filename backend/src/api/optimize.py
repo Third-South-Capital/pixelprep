@@ -155,45 +155,64 @@ async def _process_image(
             persistent_storage = PersistentStorage(current_user.id)
 
             # Save original image first
-            with tempfile.NamedTemporaryFile(
-                suffix=Path(file.filename).suffix, delete=False
-            ) as tmp_original:
-                tmp_original.write(content)
-                tmp_original.flush()
+            tmp_original_path = None
+            tmp_optimized_path = None
 
-                original_metadata = {
-                    "dimensions": f"{image.size[0]}×{image.size[1]}",
-                    "format": image.format or "Unknown",
-                    "mode": image.mode,
-                }
+            try:
+                with tempfile.NamedTemporaryFile(
+                    suffix=Path(file.filename).suffix, delete=False
+                ) as tmp_original:
+                    tmp_original_path = tmp_original.name
+                    tmp_original.write(content)
+                    tmp_original.flush()
 
-                original_result = persistent_storage.store_original_image(
-                    tmp_original.name, file.filename, original_metadata
-                )
+                    original_metadata = {
+                        "dimensions": f"{image.size[0]}×{image.size[1]}",
+                        "format": image.format or "Unknown",
+                        "mode": image.mode,
+                    }
 
-                if not original_result["success"]:
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Failed to store original image: {original_result['error']}",
+                    original_result = persistent_storage.store_original_image(
+                        tmp_original.name, file.filename, original_metadata
                     )
 
-            # Save optimized image
-            with tempfile.NamedTemporaryFile(
-                suffix=".jpg", delete=False
-            ) as tmp_optimized:
-                metadata = processor.save_optimized(processed_image, tmp_optimized.name)
+                    if not original_result["success"]:
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Failed to store original image: {original_result['error']}",
+                        )
 
-                preset_name = processor.get_preset_config().get("name", "unknown")
-                optimization_result = persistent_storage.store_optimized_image(
-                    tmp_optimized.name,
-                    original_result["image_id"],
-                    preset_name.lower().replace(" ", "_"),
-                    metadata,
-                )
+                # Save optimized image
+                with tempfile.NamedTemporaryFile(
+                    suffix=".jpg", delete=False
+                ) as tmp_optimized:
+                    tmp_optimized_path = tmp_optimized.name
+                    metadata = processor.save_optimized(processed_image, tmp_optimized.name)
 
-                if not optimization_result["success"]:
-                    # Still return the image even if storage fails
-                    pass
+                    preset_name = processor.get_preset_config().get("name", "unknown")
+                    optimization_result = persistent_storage.store_optimized_image(
+                        tmp_optimized.name,
+                        original_result["image_id"],
+                        preset_name.lower().replace(" ", "_"),
+                        metadata,
+                    )
+
+                    if not optimization_result["success"]:
+                        # Still return the image even if storage fails
+                        pass
+            finally:
+                # Clean up temporary files
+                if tmp_original_path:
+                    try:
+                        Path(tmp_original_path).unlink(missing_ok=True)
+                    except Exception:
+                        pass  # Ignore cleanup failures
+
+                if tmp_optimized_path:
+                    try:
+                        Path(tmp_optimized_path).unlink(missing_ok=True)
+                    except Exception:
+                        pass  # Ignore cleanup failures
 
             # Read processed image for ZIP creation
             processed_content = io.BytesIO()
@@ -217,27 +236,36 @@ async def _process_image(
             }
         else:
             # Anonymous user - use temporary storage
-            temp_storage = TemporaryStorage()
+            tmp_file_path = None
 
-            # Save to temporary file for metadata
-            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
-                metadata = processor.save_optimized(processed_image, tmp_file.name)
+            try:
+                # Save to temporary file for metadata
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_file:
+                    tmp_file_path = tmp_file.name
+                    metadata = processor.save_optimized(processed_image, tmp_file.name)
 
-            # Read processed image back for ZIP creation
-            processed_content = io.BytesIO()
-            processed_image.save(
-                processed_content, format="JPEG", quality=95, optimize=True
-            )
-            processed_content.seek(0)
+                # Read processed image back for ZIP creation
+                processed_content = io.BytesIO()
+                processed_image.save(
+                    processed_content, format="JPEG", quality=95, optimize=True
+                )
+                processed_content.seek(0)
 
-            return {
-                "image_data": processed_content.getvalue(),
-                "metadata": metadata,
-                "original_filename": file.filename,
-                "original_file_size": original_file_size,
-                "processor_config": processor.get_preset_config(),
-                "storage_type": "temporary",
-            }
+                return {
+                    "image_data": processed_content.getvalue(),
+                    "metadata": metadata,
+                    "original_filename": file.filename,
+                    "original_file_size": original_file_size,
+                    "processor_config": processor.get_preset_config(),
+                    "storage_type": "temporary",
+                }
+            finally:
+                # Clean up temporary file
+                if tmp_file_path:
+                    try:
+                        Path(tmp_file_path).unlink(missing_ok=True)
+                    except Exception:
+                        pass  # Ignore cleanup failures
 
     except HTTPException:
         raise
