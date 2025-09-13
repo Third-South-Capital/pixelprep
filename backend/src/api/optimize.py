@@ -214,11 +214,13 @@ async def _process_image(
                     except Exception:
                         pass  # Ignore cleanup failures
 
-            # Read processed image for ZIP creation
+            # Read processed image for ZIP creation using processor-specific compression
             processed_content = io.BytesIO()
-            processed_image.save(
-                processed_content, format="JPEG", quality=95, optimize=True
-            )
+
+            # Use processor-specific compression parameters
+            compression_params = processor.get_compression_params(quality=95)
+            processed_image.save(processed_content, **compression_params)
+
             processed_content.seek(0)
 
             return {
@@ -244,11 +246,13 @@ async def _process_image(
                     tmp_file_path = tmp_file.name
                     metadata = processor.save_optimized(processed_image, tmp_file.name)
 
-                # Read processed image back for ZIP creation
+                # Read processed image back for ZIP creation using processor-specific compression
                 processed_content = io.BytesIO()
-                processed_image.save(
-                    processed_content, format="JPEG", quality=95, optimize=True
-                )
+
+                # Use processor-specific compression parameters
+                compression_params = processor.get_compression_params(quality=95)
+                processed_image.save(processed_content, **compression_params)
+
                 processed_content.seek(0)
 
                 return {

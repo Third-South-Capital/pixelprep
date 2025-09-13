@@ -68,3 +68,19 @@ class BaseProcessor(ABC):
     def _resize_with_quality(self, image: Image.Image, target_width: int, target_height: int) -> Image.Image:
         """Resize image with high quality resampling."""
         return image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+
+    def get_compression_params(self, quality: int = 95) -> dict[str, Any]:
+        """
+        Get standardized compression parameters for this processor.
+        Each processor can override this to provide format-specific settings.
+
+        Args:
+            quality: JPEG quality (1-100)
+
+        Returns:
+            Dictionary with PIL Image.save() parameters
+        """
+        return {
+            'quality': quality,
+            'optimize': True
+        }
