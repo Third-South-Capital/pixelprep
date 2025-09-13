@@ -13,7 +13,7 @@ export function ProcessingStatus() {
           Creating Your Masterpiece
         </h3>
         <p className="text-lg text-gray-600">
-          Our AI is carefully optimizing your artwork...
+          Optimizing your image formatting...
         </p>
       </div>
       

@@ -136,19 +136,19 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
             <div className="space-y-4 flex-grow">
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">Filename:</span>
-                  <span className="font-mono text-sm text-right break-all max-w-xs text-blue-800">{originalFile.name}</span>
-                </div>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">File size:</span>
+                  <span className="text-gray-700 font-semibold">File size</span>
                   <span className="font-mono text-lg font-bold text-blue-600">{formatFileSize(originalFile.size)}</span>
                 </div>
               </div>
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">Format:</span>
+                  <span className="text-gray-700 font-semibold">Dimensions</span>
+                  <span className="font-mono text-blue-800 font-medium">Original size</span>
+                </div>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 font-semibold">Format</span>
                   <span className="font-mono text-blue-800 font-medium">{originalFile.type.split('/')[1]?.toUpperCase() || 'Unknown'}</span>
                 </div>
               </div>
@@ -159,31 +159,25 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
           <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-emerald-100 min-h-[280px] flex flex-col">
             <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
               <div className="w-5 h-5 bg-emerald-400 rounded-full mr-3 animate-pulse"></div>
-              Optimized Result
+              {result.processor_config.name} Optimization
             </h4>
             <div className="space-y-4 flex-grow">
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">Preset used:</span>
-                  <span className="font-bold text-emerald-600">{result.processor_config.name}</span>
-                </div>
-              </div>
-              <div className="bg-emerald-50 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">{result.metadata.format === 'ZIP' ? 'Optimized size:' : 'File size:'}:</span>
+                  <span className="text-gray-700 font-semibold">File size</span>
                   <span className="font-mono text-lg font-bold text-emerald-600">{formatFileSize(result.metadata.file_size_bytes)}</span>
                 </div>
               </div>
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">Format:</span>
-                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.format}</span>
+                  <span className="text-gray-700 font-semibold">Dimensions</span>
+                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.dimensions}</span>
                 </div>
               </div>
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-semibold">Dimensions:</span>
-                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.dimensions}</span>
+                  <span className="text-gray-700 font-semibold">Format</span>
+                  <span className="font-mono text-emerald-800 font-medium">{result.metadata.format}</span>
                 </div>
               </div>
             </div>

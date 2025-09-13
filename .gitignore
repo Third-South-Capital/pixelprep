@@ -163,3 +163,10 @@ Thumbs.db
 # Local development
 .env.local
 .env.development
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.tmp/
+frontend/coverage/
+*.lock

@@ -41,8 +41,8 @@ class ApiService {
     const blob = await response.blob();
     
     if (format === 'zip') {
-      // Extract metadata from ZIP
-      const metadata = await this.extractMetadataFromZip(blob);
+      // Extract metadata from ZIP using response headers for accurate file size
+      const metadata = await this.extractMetadataFromZip(blob, response, file, preset);
       return { blob, metadata, isZip: true };
     } else {
       // Create metadata from response headers
@@ -88,29 +88,44 @@ class ApiService {
     };
   }
 
-  private async extractMetadataFromZip(zipBlob: Blob): Promise<OptimizationResult> {
-    // Extract metadata from response headers if available
-    // The backend should include the actual optimized image size in headers even for ZIP responses
-    const optimizedSize = Math.round(zipBlob.size * 0.7); // Estimate ~70% of ZIP size is the actual image
+  private async extractMetadataFromZip(
+    _zipBlob: Blob, 
+    response: Response, 
+    originalFile: File, 
+    preset: PresetName
+  ): Promise<OptimizationResult> {
+    // Get actual optimized file size from response headers
+    const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
+    const dimensions = response.headers.get('X-Dimensions') || this.getPresetDimensions(preset);
     
-    const placeholderMetadata: OptimizationResult = {
-      preset: 'optimized',
-      original_file: 'uploaded_file',
-      optimized_file: 'optimized_file',
+    // Get the actual optimized image size from headers
+    let optimizedSize = 0;
+    const xFileSize = response.headers.get('X-File-Size');
+    
+    if (xFileSize && !isNaN(parseInt(xFileSize))) {
+      optimizedSize = parseInt(xFileSize);
+    } else {
+      // Fallback: estimate based on original file size and preset
+      optimizedSize = Math.round(originalFile.size * this.getCompressionRatio(preset));
+    }
+    
+    return {
+      preset,
+      original_file: originalFilename,
+      optimized_file: `${originalFile.name.split('.')[0]}_${preset}.jpg`,
       processor_config: {
-        name: 'Processing Complete',
-        description: 'Image has been optimized and packaged with metadata',
-        aspect_ratio: 'Preserved'
+        name: this.getPresetDisplayName(preset),
+        description: this.getPresetDescription(preset),
+        aspect_ratio: 'Preserved',
+        use_case: this.getPresetUseCase(preset)
       },
       metadata: {
-        file_size_bytes: optimizedSize, // Use estimated optimized size instead of ZIP size
+        file_size_bytes: optimizedSize, // Use actual optimized size, not ZIP size
         file_size_mb: Math.round(optimizedSize / 1024 / 1024 * 100) / 100,
-        dimensions: 'Optimized',
-        format: 'ZIP'
+        dimensions,
+        format: 'JPEG' // ZIP contains JPEG image
       }
     };
-
-    return placeholderMetadata;
   }
 
   private getPresetDimensions(preset: PresetName): string {

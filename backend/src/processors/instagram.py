@@ -53,7 +53,8 @@ class InstagramSquareProcessor(BaseProcessor):
             'max_file_size': f'<{self.MAX_FILE_SIZE_MB}MB',
             'format': self.FORMAT,
             'color_space': 'sRGB',
-            'aspect_ratio': '1:1'
+            'aspect_ratio': '1:1',
+            'use_case': 'Social media posts, portfolio sharing, engagement'
         }
     
     def _optimize_file_size(self, image: Image.Image) -> Image.Image:
