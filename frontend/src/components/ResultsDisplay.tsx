@@ -197,7 +197,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
                 </p>
               ) : (
                 <p className="text-lg font-semibold text-green-800">
-                  {formatFileSize(savings.bytes)} saved (<AnimatedCounter from={0} to={savings.percentage} />% reduction)
+                  {formatFileSize(savings.bytes)} saved (<AnimatedCounter from={0} to={savings.percentage} /> reduction)
                 </p>
               )}
               <p className={`text-sm mt-1 ${
