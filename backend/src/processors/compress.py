@@ -204,3 +204,12 @@ class QuickCompressProcessor(BaseProcessor):
             'target_achieved': actual_reduction >= self.TARGET_REDUCTION_PERCENT * 0.8,
             'size_reduction': f'{original_size_estimate - final_file_size} bytes saved'
         }
+
+    def get_compression_params(self, quality: int = 95) -> dict[str, Any]:
+        """Get quick compress-specific compression parameters with dynamic progressive setting."""
+        return {
+            'format': self.FORMAT,
+            'quality': quality,
+            'optimize': True,
+            'progressive': True if quality > 60 else False  # Dynamic progressive based on quality
+        }

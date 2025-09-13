@@ -170,3 +170,12 @@ class EmailNewsletterProcessor(BaseProcessor):
             'email_friendly': True,  # Non-progressive JPEG
             'mobile_optimized': image.size[0] <= self.TARGET_WIDTH
         }
+
+    def get_compression_params(self, quality: int = 85) -> dict[str, Any]:
+        """Get email newsletter-specific compression parameters."""
+        return {
+            'format': self.FORMAT,
+            'quality': quality,
+            'optimize': True,
+            'progressive': False  # Better email compatibility
+        }

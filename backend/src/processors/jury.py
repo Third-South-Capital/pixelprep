@@ -194,3 +194,12 @@ class JurySubmissionProcessor(BaseProcessor):
             'dpi': final_dpi,
             'meets_jury_requirements': min_size_bytes <= file_size <= max_size_bytes
         }
+
+    def get_compression_params(self, quality: int = 95) -> dict[str, Any]:
+        """Get jury submission-specific compression parameters."""
+        return {
+            'format': self.FORMAT,
+            'quality': quality,
+            'optimize': True,
+            'dpi': (150, 150)  # Mid-range DPI for jury submissions
+        }

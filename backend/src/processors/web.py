@@ -238,3 +238,13 @@ class WebDisplayProcessor(BaseProcessor):
             'meets_size_requirement': file_size <= (self.MAX_FILE_SIZE_KB * 1024),
             'compression_ratio': f'{image.size[0] / self.TARGET_WIDTH:.1f}x' if image.size[0] != self.TARGET_WIDTH else '1.0x'
         }
+
+    def get_compression_params(self, quality: int = 90) -> dict[str, Any]:
+        """Get web display-specific compression parameters."""
+        # Default to JPEG settings, WebP handled separately in processor logic
+        return {
+            'format': self.FALLBACK_FORMAT,  # JPEG for API responses
+            'quality': quality,
+            'optimize': True,
+            'progressive': True  # Progressive JPEG for web
+        }
