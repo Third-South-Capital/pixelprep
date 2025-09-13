@@ -1,6 +1,8 @@
 import io
-from typing import Dict, Any, Optional
+from typing import Any
+
 from PIL import Image, ImageFile
+
 from .base import BaseProcessor
 
 # Allow loading of truncated images
@@ -9,7 +11,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class CustomProcessor(BaseProcessor):
     """Processor for custom dimensions: Accept width, height, max_size_mb as parameters."""
-    
+
     def __init__(self, width: int, height: int, max_size_mb: float = 5.0, format: str = 'JPEG'):
         """
         Initialize custom processor with user-defined parameters.
@@ -26,7 +28,7 @@ class CustomProcessor(BaseProcessor):
         self.format = format.upper()
         self.quality_start = 95
         self.quality_min = 50 if format.upper() == 'JPEG' else 80
-    
+
     def process(self, image: Image.Image) -> Image.Image:
         """
         Process image with custom dimensions and size constraints.
@@ -47,12 +49,12 @@ class CustomProcessor(BaseProcessor):
         else:
             # Default to JPEG, ensure RGB mode
             image = self._ensure_rgb(image)
-        
+
         # Resize to target dimensions with smart cropping if needed
         if image.size != (self.target_width, self.target_height):
             target_ratio = self.target_width / self.target_height
             current_ratio = image.size[0] / image.size[1]
-            
+
             if abs(target_ratio - current_ratio) > 0.1:  # Different aspect ratios
                 # Smart crop to match aspect ratio, then resize to target dimensions
                 image = self._smart_crop(image, self.target_width, self.target_height)
@@ -61,13 +63,13 @@ class CustomProcessor(BaseProcessor):
             else:
                 # Similar aspect ratios, just resize
                 image = self._resize_with_quality(image, self.target_width, self.target_height)
-        
+
         # Optimize file size to meet constraints
         optimized_image = self._optimize_for_custom_size(image)
-        
+
         return optimized_image
-    
-    def get_preset_config(self) -> Dict[str, Any]:
+
+    def get_preset_config(self) -> dict[str, Any]:
         """Get custom processor configuration."""
         return {
             'name': 'Custom',
@@ -79,7 +81,7 @@ class CustomProcessor(BaseProcessor):
             'use_case': 'User-defined specifications',
             'customizable': True
         }
-    
+
     def _optimize_for_custom_size(self, image: Image.Image) -> Image.Image:
         """
         Optimize image to meet custom file size requirements.
@@ -92,16 +94,16 @@ class CustomProcessor(BaseProcessor):
         """
         max_size_bytes = int(self.max_size_mb * 1024 * 1024)
         quality = self.quality_start
-        
+
         while quality >= self.quality_min:
             output_buffer = io.BytesIO()
-            
+
             # Format-specific optimization
             save_kwargs = {
                 'format': self.format,
                 'optimize': True
             }
-            
+
             if self.format == 'JPEG':
                 save_kwargs.update({
                     'quality': quality,
@@ -119,22 +121,22 @@ class CustomProcessor(BaseProcessor):
                     'optimize': True
                 })
                 # PNG doesn't use quality parameter
-                
+
             try:
                 image.save(output_buffer, **save_kwargs)
                 file_size = output_buffer.tell()
-                
+
                 # If file size is acceptable, return the image
                 if file_size <= max_size_bytes:
                     output_buffer.seek(0)
                     return Image.open(output_buffer)
-                
+
                 # For PNG, we can't reduce quality, so break
                 if self.format == 'PNG':
                     break
-                    
+
                 quality -= 5
-                
+
             except (OSError, NotImplementedError) as e:
                 # Handle format not supported
                 if self.format == 'WebP':
@@ -143,14 +145,14 @@ class CustomProcessor(BaseProcessor):
                     continue
                 else:
                     raise e
-        
+
         # If we can't meet size requirements, return best effort
         output_buffer = io.BytesIO()
         save_kwargs = {
             'format': self.format,
             'optimize': True
         }
-        
+
         if self.format == 'JPEG':
             save_kwargs.update({
                 'quality': self.quality_min,
@@ -166,12 +168,12 @@ class CustomProcessor(BaseProcessor):
             save_kwargs.update({
                 'compress_level': 9
             })
-            
+
         image.save(output_buffer, **save_kwargs)
         output_buffer.seek(0)
         return Image.open(output_buffer)
-    
-    def save_optimized(self, image: Image.Image, output_path: str) -> Dict[str, Any]:
+
+    def save_optimized(self, image: Image.Image, output_path: str) -> dict[str, Any]:
         """
         Save custom optimized image and return metadata.
         
@@ -185,7 +187,7 @@ class CustomProcessor(BaseProcessor):
         max_size_bytes = int(self.max_size_mb * 1024 * 1024)
         quality = self.quality_start
         final_quality = quality
-        
+
         # Find optimal settings for target file size
         while quality >= self.quality_min:
             test_buffer = io.BytesIO()
@@ -193,7 +195,7 @@ class CustomProcessor(BaseProcessor):
                 'format': self.format,
                 'optimize': True
             }
-            
+
             if self.format == 'JPEG':
                 save_kwargs.update({
                     'quality': quality,
@@ -208,33 +210,33 @@ class CustomProcessor(BaseProcessor):
             elif self.format == 'PNG':
                 save_kwargs['compress_level'] = 9
                 quality = None  # PNG doesn't use quality
-            
+
             try:
                 image.save(test_buffer, **save_kwargs)
                 file_size = test_buffer.tell()
-                
+
                 if file_size <= max_size_bytes:
                     final_quality = quality
                     break
-                    
+
                 if self.format == 'PNG':
                     break  # Can't reduce PNG quality
-                    
+
                 quality -= 5
-                
+
             except (OSError, NotImplementedError):
                 # Format fallback
                 if self.format == 'WebP':
                     self.format = 'JPEG'
                     continue
                 break
-        
+
         # Save with optimal settings
         save_kwargs = {
             'format': self.format,
             'optimize': True
         }
-        
+
         if self.format == 'JPEG':
             save_kwargs.update({
                 'quality': final_quality or self.quality_min,
@@ -248,13 +250,13 @@ class CustomProcessor(BaseProcessor):
             })
         elif self.format == 'PNG':
             save_kwargs['compress_level'] = 9
-        
+
         image.save(output_path, **save_kwargs)
-        
+
         # Return metadata
         import os
         file_size = os.path.getsize(output_path)
-        
+
         metadata = {
             'file_path': output_path,
             'file_size_bytes': file_size,
@@ -266,16 +268,16 @@ class CustomProcessor(BaseProcessor):
             'custom_height': self.target_height,
             'max_size_mb': self.max_size_mb
         }
-        
+
         # Add quality info for lossy formats
         if self.format in ['JPEG', 'WebP'] and final_quality:
             metadata['quality'] = final_quality
-        
+
         return metadata
 
 
 # Factory function for creating custom processors
-def create_custom_processor(width: int, height: int, max_size_mb: float = 5.0, 
+def create_custom_processor(width: int, height: int, max_size_mb: float = 5.0,
                            format: str = 'JPEG') -> CustomProcessor:
     """
     Factory function to create a custom processor with specified parameters.

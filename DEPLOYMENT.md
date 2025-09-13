@@ -1,6 +1,6 @@
 # PixelPrep Production Deployment Guide
 
-This guide covers deploying PixelPrep to production using Render (backend) and GitHub Pages (frontend).
+This guide covers deploying PixelPrep v2.0.0 with the EntryThingy design system to production using Render (backend) and GitHub Pages (frontend).
 
 ## 📋 Prerequisites
 
@@ -73,6 +73,12 @@ The API will automatically configure CORS based on the environment variables abo
 - Get your production API URL: `https://pixelprep-api.onrender.com`
 
 ## 🌐 Frontend Deployment (GitHub Pages)
+
+The frontend includes the **EntryThingy design system** with:
+- Professional Outfit font typography
+- Light/dark mode support with CSS variables
+- Responsive design optimized for all devices
+- Accessibility compliance (WCAG AA)
 
 ### 1. Update API Configuration
 

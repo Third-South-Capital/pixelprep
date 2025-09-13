@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any
+
 from PIL import Image
 
 
 class BaseProcessor(ABC):
     """Abstract base class for all image processors."""
-    
+
     @abstractmethod
     def process(self, image: Image.Image) -> Image.Image:
         """
@@ -18,9 +19,9 @@ class BaseProcessor(ABC):
             Processed PIL Image object
         """
         pass
-    
+
     @abstractmethod
-    def get_preset_config(self) -> Dict[str, Any]:
+    def get_preset_config(self) -> dict[str, Any]:
         """
         Get the configuration parameters for this preset.
         
@@ -28,7 +29,7 @@ class BaseProcessor(ABC):
             Dictionary containing preset configuration
         """
         pass
-    
+
     def _ensure_rgb(self, image: Image.Image) -> Image.Image:
         """Convert image to RGB mode if necessary."""
         if image.mode in ('RGBA', 'LA'):
@@ -41,7 +42,7 @@ class BaseProcessor(ABC):
         elif image.mode != 'RGB':
             return image.convert('RGB')
         return image
-    
+
     def _smart_crop(self, image: Image.Image, target_width: int, target_height: int) -> Image.Image:
         """
         Smart crop image to target dimensions while preserving important content.
@@ -50,7 +51,7 @@ class BaseProcessor(ABC):
         current_width, current_height = image.size
         target_ratio = target_width / target_height
         current_ratio = current_width / current_height
-        
+
         if current_ratio > target_ratio:
             # Image is wider than target, crop horizontally
             new_width = int(current_height * target_ratio)
@@ -63,7 +64,7 @@ class BaseProcessor(ABC):
             top = (current_height - new_height) // 2
             bottom = top + new_height
             return image.crop((0, top, current_width, bottom))
-    
+
     def _resize_with_quality(self, image: Image.Image, target_width: int, target_height: int) -> Image.Image:
         """Resize image with high quality resampling."""
         return image.resize((target_width, target_height), Image.Resampling.LANCZOS)

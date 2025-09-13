@@ -3,14 +3,14 @@
 Test all PixelPrep presets with a single image to showcase all capabilities.
 """
 
-import os
-import sys
 import json
+import sys
 import zipfile
-import requests
-from pathlib import Path
-from PIL import Image
 from datetime import datetime
+from pathlib import Path
+
+import requests
+from PIL import Image
 
 # Add backend to path for imports
 sys.path.append(str(Path(__file__).parent.parent / "backend" / "src"))
@@ -38,12 +38,12 @@ def get_available_presets():
 def optimize_with_preset(image_path: Path, preset: str):
     """Optimize image with specific preset."""
     print(f"  🎨 {preset}")
-    
+
     try:
         with open(image_path, 'rb') as f:
             files = {"file": (image_path.name, f, "image/jpeg")}
             data = {"preset": preset}
-            
+
             response = requests.post(
                 f"{API_BASE_URL}/optimize/",
                 files=files,
@@ -51,38 +51,38 @@ def optimize_with_preset(image_path: Path, preset: str):
                 timeout=30
             )
             response.raise_for_status()
-        
+
         # Save ZIP and extract
         zip_path = RESULTS_DIR / "all_presets" / f"{image_path.stem}_{preset}.zip"
         with open(zip_path, 'wb') as f:
             f.write(response.content)
-        
+
         # Extract optimized image
         with zipfile.ZipFile(zip_path, 'r') as zip_file:
             image_files = [f for f in zip_file.namelist() if f.endswith(('.jpg', '.jpeg', '.webp', '.png'))]
             if image_files:
                 optimized_filename = image_files[0]
                 zip_file.extract(optimized_filename, RESULTS_DIR / "all_presets")
-                
+
                 # Read metadata
                 metadata_content = zip_file.read("metadata.json")
                 metadata = json.loads(metadata_content)
-                
+
                 return {
                     "success": True,
                     "preset": preset,
                     "filename": optimized_filename,
                     "metadata": metadata
                 }
-        
+
         return {"success": False, "error": "No optimized image found"}
-        
+
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 def create_showcase_html(results, output_path, test_image_path):
     """Create HTML showcase of all presets."""
-    
+
     original_info = {}
     with Image.open(test_image_path) as img:
         file_size = test_image_path.stat().st_size
@@ -91,7 +91,7 @@ def create_showcase_html(results, output_path, test_image_path):
             "file_size_mb": round(file_size / (1024 * 1024), 2),
             "format": img.format
         }
-    
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -224,25 +224,25 @@ def create_showcase_html(results, output_path, test_image_path):
         </div>
         
         <div class="presets-grid">"""
-    
+
     for result in results:
         if result['success']:
             metadata = result['metadata']
             processor_config = metadata.get('processor_config', {})
             inner_metadata = metadata.get('metadata', {})
-            
+
             preset_name = processor_config.get('name', result['preset'])
             description = processor_config.get('description', 'Optimized version')
-            
+
             file_size_mb = inner_metadata.get('file_size_mb', 0)
             dimensions = inner_metadata.get('dimensions', 'Unknown')
             format_info = inner_metadata.get('format', 'JPEG')
-            
+
             # Calculate size reduction
             size_reduction = 0
             if file_size_mb > 0 and original_info['file_size_mb'] > 0:
                 size_reduction = (1 - file_size_mb / original_info['file_size_mb']) * 100
-            
+
             html_content += f"""
             <div class="preset-card">
                 <div class="preset-header">
@@ -288,7 +288,7 @@ def create_showcase_html(results, output_path, test_image_path):
                     </div>
                 </div>
             </div>"""
-    
+
     html_content += f"""
         </div>
         
@@ -298,7 +298,7 @@ def create_showcase_html(results, output_path, test_image_path):
     </div>
 </body>
 </html>"""
-    
+
     with open(output_path, 'w') as f:
         f.write(html_content)
 
@@ -307,9 +307,9 @@ def main():
     print("🎨 PixelPrep All Presets Showcase")
     print("=" * 40)
     print()
-    
+
     setup_directories()
-    
+
     # Check API
     try:
         response = requests.get(f"{API_BASE_URL}/health", timeout=5)
@@ -318,55 +318,55 @@ def main():
     except:
         print("❌ API not running. Start with: just dev")
         return 1
-    
+
     # Get available presets
     presets = get_available_presets()
     if not presets:
         print("❌ No presets available")
         return 1
-    
+
     print(f"📋 Found {len(presets)} presets: {', '.join(presets)}")
     print()
-    
+
     # Find a good test image
     test_images = list(TEST_IMAGES_DIR.glob("*.jpg"))
     if not test_images:
         print("❌ No test images found")
         return 1
-    
+
     # Use the first image
     test_image = test_images[0]
     print(f"🖼️ Using test image: {test_image.name}")
     print()
-    
+
     # Copy original to results
     import shutil
     shutil.copy2(test_image, RESULTS_DIR / "all_presets" / test_image.name)
-    
+
     # Test each preset
     results = []
     for preset in presets:
         result = optimize_with_preset(test_image, preset)
         results.append(result)
-        
+
         if result['success']:
             metadata = result['metadata']
             file_size = metadata.get('file_size_mb', 0)
             print(f"     ✅ {file_size}MB")
         else:
             print(f"     ❌ {result['error']}")
-    
+
     print()
     print("📊 Generating showcase report...")
-    
+
     # Create showcase HTML
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     html_path = RESULTS_DIR / "reports" / f"all_presets_showcase_{timestamp}.html"
     create_showcase_html(results, html_path, test_image)
-    
+
     print(f"✅ Showcase created: {html_path}")
     print(f"🌐 Open in browser: file://{html_path.absolute()}")
-    
+
     return 0
 
 if __name__ == "__main__":

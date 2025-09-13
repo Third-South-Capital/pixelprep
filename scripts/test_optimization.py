@@ -6,16 +6,17 @@ This script processes all test images through the PixelPrep API,
 saves the results, and creates visual comparison reports.
 """
 
-import os
-import sys
 import json
+import os
 import shutil
+import sys
 import zipfile
-import requests
-from pathlib import Path
-from PIL import Image
 from datetime import datetime
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any
+
+import requests
+from PIL import Image
 
 # Add backend to path for imports
 sys.path.append(str(Path(__file__).parent.parent / "backend" / "src"))
@@ -43,7 +44,7 @@ def check_api_health() -> bool:
         print("💡 Start the API server with: just dev")
         return False
 
-def get_image_info(image_path: Path) -> Dict[str, Any]:
+def get_image_info(image_path: Path) -> dict[str, Any]:
     """Get detailed information about an image."""
     with Image.open(image_path) as img:
         file_size = image_path.stat().st_size
@@ -70,20 +71,20 @@ def get_aspect_type(ratio: float) -> str:
     else:
         return "square"
 
-def optimize_image(image_path: Path, preset: str = "instagram_square") -> Dict[str, Any]:
+def optimize_image(image_path: Path, preset: str = "instagram_square") -> dict[str, Any]:
     """Optimize a single image using the API."""
     print(f"🔄 Optimizing: {image_path.name}")
-    
+
     # Copy original to results for comparison
     original_copy = RESULTS_DIR / "originals" / image_path.name
     shutil.copy2(image_path, original_copy)
-    
+
     try:
         # Call API
         with open(image_path, 'rb') as f:
             files = {"file": (image_path.name, f, "image/jpeg")}
             data = {"preset": preset}
-            
+
             response = requests.post(
                 f"{API_BASE_URL}/optimize/",
                 files=files,
@@ -91,14 +92,14 @@ def optimize_image(image_path: Path, preset: str = "instagram_square") -> Dict[s
                 timeout=30
             )
             response.raise_for_status()
-        
+
         # Save ZIP response
         zip_filename = f"{image_path.stem}_{preset}.zip"
         zip_path = RESULTS_DIR / "zips" / zip_filename
-        
+
         with open(zip_path, 'wb') as f:
             f.write(response.content)
-        
+
         # Extract optimized image and metadata
         with zipfile.ZipFile(zip_path, 'r') as zip_file:
             # Extract optimized image
@@ -106,15 +107,15 @@ def optimize_image(image_path: Path, preset: str = "instagram_square") -> Dict[s
             if image_files:
                 optimized_filename = image_files[0]
                 zip_file.extract(optimized_filename, RESULTS_DIR / "optimized")
-                
+
                 # Get metadata
                 metadata_content = zip_file.read("metadata.json")
                 metadata = json.loads(metadata_content)
-                
+
                 # Get info about optimized image
                 optimized_path = RESULTS_DIR / "optimized" / optimized_filename
                 optimized_info = get_image_info(optimized_path)
-                
+
                 return {
                     "success": True,
                     "original": get_image_info(image_path),
@@ -123,7 +124,7 @@ def optimize_image(image_path: Path, preset: str = "instagram_square") -> Dict[s
                     "zip_path": str(zip_path),
                     "processing_time": "<2s"  # Would need timing code for exact measurement
                 }
-        
+
     except requests.RequestException as e:
         print(f"❌ API error: {e}")
         return {
@@ -139,9 +140,9 @@ def optimize_image(image_path: Path, preset: str = "instagram_square") -> Dict[s
             "original": get_image_info(image_path)
         }
 
-def create_html_report(results: List[Dict[str, Any]], output_path: Path):
+def create_html_report(results: list[dict[str, Any]], output_path: Path):
     """Create an HTML report with before/after comparisons."""
-    
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -255,19 +256,19 @@ def create_html_report(results: List[Dict[str, Any]], output_path: Path):
 """
 
     successful_results = [r for r in results if r['success']]
-    
+
     for result in results:
         if result['success']:
             original = result['original']
             optimized = result['optimized']
             metadata = result['metadata']
-            
+
             size_reduction = round((1 - optimized['file_size_mb'] / original['file_size_mb']) * 100, 1)
-            
+
             # Relative paths for images
             original_rel_path = f"../originals/{original['filename']}"
             optimized_rel_path = f"../optimized/{os.path.basename(optimized['path'])}"
-            
+
             html_content += f"""
         <div class="result">
             <div class="result-header">
@@ -343,52 +344,52 @@ def create_html_report(results: List[Dict[str, Any]], output_path: Path):
 </body>
 </html>
 """
-    
+
     with open(output_path, 'w') as f:
         f.write(html_content)
-    
+
     print(f"📄 HTML report created: {output_path}")
 
-def create_text_report(results: List[Dict[str, Any]], output_path: Path):
+def create_text_report(results: list[dict[str, Any]], output_path: Path):
     """Create a detailed text report."""
-    
+
     successful_results = [r for r in results if r['success']]
-    
+
     with open(output_path, 'w') as f:
         f.write("PixelPrep API Optimization Test Results\n")
         f.write("=" * 50 + "\n")
         f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        
+
         f.write("SUMMARY\n")
         f.write("-" * 20 + "\n")
         f.write(f"Total Images: {len(results)}\n")
         f.write(f"Successful: {len(successful_results)}\n")
         f.write(f"Failed: {len(results) - len(successful_results)}\n\n")
-        
+
         if successful_results:
             avg_reduction = sum(
-                (1 - r['optimized']['file_size_mb'] / r['original']['file_size_mb']) * 100 
+                (1 - r['optimized']['file_size_mb'] / r['original']['file_size_mb']) * 100
                 for r in successful_results
             ) / len(successful_results)
-            
+
             f.write(f"Average Size Reduction: {avg_reduction:.1f}%\n\n")
-        
+
         f.write("DETAILED RESULTS\n")
         f.write("-" * 20 + "\n\n")
-        
+
         for i, result in enumerate(successful_results, 1):
             original = result['original']
             optimized = result['optimized']
             metadata = result['metadata']
-            
+
             size_reduction = (1 - optimized['file_size_mb'] / original['file_size_mb']) * 100
-            
+
             f.write(f"{i}. {original['filename']}\n")
             f.write(f"   Original: {original['dimensions']} | {original['file_size_mb']} MB | {original['aspect_type']}\n")
             f.write(f"   Optimized: {optimized['dimensions']} | {optimized['file_size_mb']} MB | Instagram Square\n")
             f.write(f"   Improvement: {size_reduction:.1f}% smaller | Quality: {metadata['metadata']['quality']}%\n")
-            f.write(f"   Instagram Ready: ✅ All specs met\n\n")
-        
+            f.write("   Instagram Ready: ✅ All specs met\n\n")
+
         # Failed results
         failed_results = [r for r in results if not r['success']]
         if failed_results:
@@ -396,7 +397,7 @@ def create_text_report(results: List[Dict[str, Any]], output_path: Path):
             f.write("-" * 20 + "\n")
             for result in failed_results:
                 f.write(f"❌ {result['original']['filename']}: {result.get('error', 'Unknown error')}\n")
-    
+
     print(f"📄 Text report created: {output_path}")
 
 def main():
@@ -404,29 +405,29 @@ def main():
     print("🧪 PixelPrep API Optimization Test Suite")
     print("=" * 50)
     print()
-    
+
     # Setup
     setup_directories()
-    
+
     # Check if API is running
     if not check_api_health():
         return 1
-    
+
     # Find test images
     image_files = list(TEST_IMAGES_DIR.glob("*.jpg")) + list(TEST_IMAGES_DIR.glob("*.png"))
     if not image_files:
         print("❌ No test images found. Run download_test_images.py first.")
         return 1
-    
+
     print(f"🖼️ Found {len(image_files)} test images")
     print()
-    
+
     # Process each image
     results = []
     for image_path in sorted(image_files):
         result = optimize_image(image_path)
         results.append(result)
-        
+
         if result['success']:
             original_mb = result['original']['file_size_mb']
             optimized_mb = result['optimized']['file_size_mb']
@@ -435,19 +436,19 @@ def main():
         else:
             print(f"   ❌ Failed: {result.get('error', 'Unknown error')}")
         print()
-    
+
     # Generate reports
     print("📊 Generating reports...")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # HTML report
     html_path = RESULTS_DIR / "reports" / f"optimization_report_{timestamp}.html"
     create_html_report(results, html_path)
-    
+
     # Text report
     text_path = RESULTS_DIR / "reports" / f"optimization_report_{timestamp}.txt"
     create_text_report(results, text_path)
-    
+
     # Summary
     successful_count = sum(1 for r in results if r['success'])
     print()
@@ -455,7 +456,7 @@ def main():
     print(f"   📊 {successful_count}/{len(results)} images optimized successfully")
     print(f"   📄 Reports saved to: {RESULTS_DIR / 'reports'}")
     print(f"   🌐 Open HTML report: {html_path}")
-    
+
     return 0
 
 if __name__ == "__main__":

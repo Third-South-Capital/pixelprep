@@ -1,19 +1,26 @@
 # PixelPrep - Professional Image Optimization for Artists
 
 [![Production Status](https://img.shields.io/badge/status-production-success)](https://third-south-capital.github.io/pixelprep/)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Third-South-Capital/pixelprep/releases/tag/v1.0.0)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/Third-South-Capital/pixelprep/releases/tag/v2.0.0)
 [![Backend API](https://img.shields.io/badge/API-live-success)](https://pixelprep.onrender.com/health)
+[![Design System](https://img.shields.io/badge/UI-EntryThingy-purple)](https://entrythingy.com)
 
 > **🎨 Transform your artwork for any platform with professional optimization presets designed specifically for artists.**
 
-**PixelPrep** is a production-ready freemium image optimization service with both anonymous and authenticated modes. Upload artwork, select a preset, and download optimized versions instantly - perfect for Instagram, jury submissions, web galleries, and more.
+**PixelPrep** is a production-ready freemium image optimization service featuring a professional **EntryThingy design system** interface. Upload artwork, select a preset, and download optimized versions instantly - perfect for Instagram, jury submissions, web galleries, and more.
 
 ## 🚀 Live Application
 
-**🌐 Frontend**: [https://third-south-capital.github.io/pixelprep/](https://third-south-capital.github.io/pixelprep/)  
+**🌐 Frontend**: [https://third-south-capital.github.io/pixelprep/](https://third-south-capital.github.io/pixelprep/)
 **🔧 Backend API**: [https://pixelprep.onrender.com/](https://pixelprep.onrender.com/)
 
 ## Features
+
+### 🎨 Professional Design System
+- **EntryThingy UI**: Clean, professional interface matching EntryThingy's design language
+- **Dark/Light Mode**: Complete theme support with user preference persistence
+- **Typography**: Outfit font with proper hierarchy and accessibility
+- **Responsive Design**: Optimized for all devices and screen sizes
 
 ### Image Optimization Presets
 - **Instagram Square**: 1080×1080px, <4MB, JPEG, sRGB
@@ -97,6 +104,7 @@ just check-env   # Verify environment configuration
 ### Tech Stack
 - **Backend**: Python 3.11, FastAPI, Pillow (PIL), uvicorn
 - **Frontend**: React 19, TypeScript, TailwindCSS v3, Vite
+- **Design System**: EntryThingy UI with Outfit font, CSS variables, dark/light modes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **Storage**: Supabase Storage + Memory-based temporary storage
 - **Auth**: GitHub OAuth + JWT tokens (HS256, 30-min expiry)

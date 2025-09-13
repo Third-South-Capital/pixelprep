@@ -160,9 +160,37 @@ Thumbs.db
 # uv
 .uv/
 
-# Local development
+# Security - Environment and Secret Files
+.env*
+!.env.example
 .env.local
 .env.development
+.env.production
+.env.staging
+.env.test
+
+# Security - Keys, Tokens, and Certificates
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+tokens/
+auth.json
+service-account*.json
+
+# Security - API Keys and Configs
+config.ini
+secrets.yaml
+secrets.yml
+.secrets
+.credentials
+
+# Local development
+local-config.json
+personal-settings.json
 
 # Frontend specific
 frontend/node_modules/

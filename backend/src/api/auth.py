@@ -29,15 +29,44 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 )
 
+# Environment Validation - Ensure Required Secrets Are Set
+def validate_auth_environment():
+    """Validate that required authentication environment variables are set."""
+    required_vars = {
+        "SUPABASE_URL": os.getenv("SUPABASE_URL"),
+        "SUPABASE_JWT_SECRET": os.getenv("SUPABASE_JWT_SECRET"),
+        "GITHUB_CLIENT_ID": os.getenv("GITHUB_CLIENT_ID"),
+        "GITHUB_CLIENT_SECRET": os.getenv("GITHUB_CLIENT_SECRET")
+    }
+
+    missing_vars = [var for var, value in required_vars.items() if not value]
+
+    if missing_vars:
+        raise ValueError(
+            f"Missing required environment variables: {', '.join(missing_vars)}. "
+            f"Authentication will be disabled."
+        )
+
+    return True
+
 # Supabase Configuration
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://zhxhuzcbsvumopxnhfxm.supabase.co")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "bPWj9/QsRxr4NRQXJ6c/Bg5yAEyBhiN6//kkFvnKlzGc4qBnbsT+DpS0WVP1VE0d9KLgKHrT9jxU8bWmJ3qvhQ==")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
 # GitHub OAuth Configuration
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")  # For OAuth callback
+
+# Validate environment on module import (fail fast)
+AUTH_ENABLED = False
+try:
+    validate_auth_environment()
+    AUTH_ENABLED = True
+except ValueError as e:
+    print(f"⚠️  AUTH WARNING: {e}")
+    AUTH_ENABLED = False
 
 
 # Pydantic Models

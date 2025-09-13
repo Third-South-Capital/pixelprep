@@ -50,6 +50,24 @@ export type PresetName =
   | 'email_newsletter' 
   | 'quick_compress';
 
+export interface ImageAnalysis {
+  width: number;
+  height: number;
+  aspectRatio: number;
+  isSquare: boolean;
+  isPortrait: boolean;
+  isLandscape: boolean;
+  isLarge: boolean; // > 2000px on any side
+  isSmall: boolean; // < 800px on both sides
+}
+
+export interface PresetRecommendation {
+  preset: PresetName;
+  confidence: number; // 0-100
+  reason: string;
+  matchFactors: string[];
+}
+
 export interface UploadState {
   file: File | null;
   preset: PresetName | null;
@@ -61,4 +79,6 @@ export interface UploadState {
   optimizedImageUrl?: string;
   optimizedBlob?: Blob;
   isZip?: boolean;
+  imageAnalysis?: ImageAnalysis;
+  recommendation?: PresetRecommendation;
 }

@@ -76,12 +76,12 @@ async def optimize_image(
         else:
             # Return ZIP with image + metadata
             zip_response = await _create_zip_response(result, preset)
-            
+
             # Convert dimensions to ASCII-safe format for headers
             dimensions = result["metadata"].get("dimensions", "unknown")
             if "×" in dimensions:
                 dimensions = dimensions.replace("×", "x")  # Replace Unicode × with ASCII x
-            
+
             return StreamingResponse(
                 io.BytesIO(zip_response),
                 media_type="application/zip",

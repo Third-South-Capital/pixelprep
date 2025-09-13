@@ -1,6 +1,8 @@
 import io
-from typing import Dict, Any
+from typing import Any
+
 from PIL import Image, ImageFile
+
 from .base import BaseProcessor
 
 # Allow loading of truncated images
@@ -9,13 +11,13 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class EmailNewsletterProcessor(BaseProcessor):
     """Processor for email newsletter format: 600px wide, <200KB, JPEG."""
-    
+
     TARGET_WIDTH = 600
     MAX_FILE_SIZE_KB = 200
     FORMAT = 'JPEG'
     QUALITY_START = 85
     QUALITY_MIN = 40
-    
+
     def process(self, image: Image.Image) -> Image.Image:
         """
         Process image for email newsletter format.
@@ -28,16 +30,16 @@ class EmailNewsletterProcessor(BaseProcessor):
         """
         # Ensure RGB mode for JPEG output
         image = self._ensure_rgb(image)
-        
+
         # Resize to target width while preserving aspect ratio
         resized_image = self._resize_to_width(image, self.TARGET_WIDTH)
-        
+
         # Optimize file size for email delivery
         optimized_image = self._optimize_for_email(resized_image)
-        
+
         return optimized_image
-    
-    def get_preset_config(self) -> Dict[str, Any]:
+
+    def get_preset_config(self) -> dict[str, Any]:
         """Get email newsletter preset configuration."""
         return {
             'name': 'Email Newsletter',
@@ -48,23 +50,23 @@ class EmailNewsletterProcessor(BaseProcessor):
             'aspect_ratio': 'Preserved',
             'use_case': 'Email marketing, newsletters, mobile-friendly delivery'
         }
-    
+
     def _resize_to_width(self, image: Image.Image, target_width: int) -> Image.Image:
         """
         Resize image to target width while preserving aspect ratio.
         """
         current_width, current_height = image.size
-        
+
         # If already smaller than target width, return as-is
         if current_width <= target_width:
             return image
-        
+
         # Calculate new height maintaining aspect ratio
         aspect_ratio = current_height / current_width
         new_height = int(target_width * aspect_ratio)
-        
+
         return self._resize_with_quality(image, target_width, new_height)
-    
+
     def _optimize_for_email(self, image: Image.Image) -> Image.Image:
         """
         Optimize image for email delivery with strict size constraints.
@@ -77,10 +79,10 @@ class EmailNewsletterProcessor(BaseProcessor):
         """
         max_size_bytes = self.MAX_FILE_SIZE_KB * 1024
         quality = self.QUALITY_START
-        
+
         while quality >= self.QUALITY_MIN:
             output_buffer = io.BytesIO()
-            
+
             # Save with current quality, optimized for email
             save_kwargs = {
                 'format': self.FORMAT,
@@ -88,18 +90,18 @@ class EmailNewsletterProcessor(BaseProcessor):
                 'optimize': True,
                 'progressive': False  # Progressive JPEGs can be problematic in email
             }
-            
+
             image.save(output_buffer, **save_kwargs)
             file_size = output_buffer.tell()
-            
+
             # If file size is acceptable, return the image
             if file_size <= max_size_bytes:
                 output_buffer.seek(0)
                 return Image.open(output_buffer)
-            
+
             # Reduce quality and try again
             quality -= 5
-        
+
         # If we can't meet size requirements, return with minimum quality
         output_buffer = io.BytesIO()
         image.save(
@@ -111,8 +113,8 @@ class EmailNewsletterProcessor(BaseProcessor):
         )
         output_buffer.seek(0)
         return Image.open(output_buffer)
-    
-    def save_optimized(self, image: Image.Image, output_path: str) -> Dict[str, Any]:
+
+    def save_optimized(self, image: Image.Image, output_path: str) -> dict[str, Any]:
         """
         Save optimized image for email newsletter and return metadata.
         
@@ -127,7 +129,7 @@ class EmailNewsletterProcessor(BaseProcessor):
         max_size_bytes = self.MAX_FILE_SIZE_KB * 1024
         quality = self.QUALITY_START
         final_quality = quality
-        
+
         while quality >= self.QUALITY_MIN:
             test_buffer = io.BytesIO()
             image.save(
@@ -138,12 +140,12 @@ class EmailNewsletterProcessor(BaseProcessor):
                 progressive=False
             )
             file_size = test_buffer.tell()
-            
+
             if file_size <= max_size_bytes:
                 final_quality = quality
                 break
             quality -= 5
-        
+
         # Save with optimal settings
         save_kwargs = {
             'format': self.FORMAT,
@@ -151,9 +153,9 @@ class EmailNewsletterProcessor(BaseProcessor):
             'optimize': True,
             'progressive': False  # Better email compatibility
         }
-        
+
         image.save(output_path, **save_kwargs)
-        
+
         # Return metadata
         import os
         file_size = os.path.getsize(output_path)

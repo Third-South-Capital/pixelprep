@@ -10,6 +10,7 @@ import { DarkModeToggle } from './components/DarkModeToggle';
 import { apiService } from './services/api';
 import { authService, type PixelPrepUser } from './services/auth';
 import { storageService } from './services/storage';
+import { getImageDimensions, analyzeImage, recommendPreset } from './utils/imageAnalysis';
 import type { UploadState, ProcessorsResponse, PresetName } from './types';
 
 function App() {
@@ -88,7 +89,7 @@ function App() {
     };
   }, []);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     const validation = apiService.validateFile(file);
     if (!validation.isValid) {
       setUploadState(prev => ({ ...prev, error: validation.error || 'Invalid file', file: null }));
@@ -98,20 +99,48 @@ function App() {
     // Create preview URL for original image
     const originalImageUrl = URL.createObjectURL(file);
 
+    // Initial state update
     setUploadState(prev => {
       // Clean up previous URLs to prevent memory leaks
       if (prev.originalImageUrl) URL.revokeObjectURL(prev.originalImageUrl);
       if (prev.optimizedImageUrl) URL.revokeObjectURL(prev.optimizedImageUrl);
-      
-      return { 
-        ...prev, 
-        file, 
-        error: null, 
+
+      return {
+        ...prev,
+        file,
+        error: null,
         result: null,
         originalImageUrl,
-        optimizedImageUrl: undefined
+        optimizedImageUrl: undefined,
+        imageAnalysis: undefined,
+        recommendation: undefined,
+        preset: null // Clear previous preset selection
       };
     });
+
+    // Analyze image dimensions and recommend preset
+    try {
+      const dimensions = await getImageDimensions(file);
+      const analysis = analyzeImage(dimensions.width, dimensions.height);
+      const recommendation = recommendPreset(analysis);
+
+      console.log('🔍 [IMAGE ANALYSIS]', {
+        file: file.name,
+        dimensions: `${dimensions.width}x${dimensions.height}`,
+        analysis,
+        recommendation
+      });
+
+      setUploadState(prev => ({
+        ...prev,
+        imageAnalysis: analysis,
+        recommendation,
+        preset: recommendation.preset // Auto-select recommended preset
+      }));
+    } catch (error) {
+      console.warn('Failed to analyze image dimensions:', error);
+      // Don't block the flow, just skip auto-selection
+    }
   };
 
   const handlePresetSelect = (preset: PresetName) => {
@@ -299,6 +328,8 @@ function App() {
                     processors={processors}
                     selectedPreset={uploadState.preset}
                     onPresetSelect={handlePresetSelect}
+                    recommendation={uploadState.recommendation}
+                    imageAnalysis={uploadState.imageAnalysis}
                   />
                 )}
 
@@ -362,7 +393,7 @@ function App() {
                               <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                               </svg>
-                              {user ? 'Optimize My Artwork' : `Optimize My Artwork ${usageCount === 0 ? '(Free)' : ''}`}
+                              {user ? 'Make it perfect →' : `Make it perfect → ${usageCount === 0 ? '(Free)' : ''}`}
                             </>
                           )}
                         </button>
