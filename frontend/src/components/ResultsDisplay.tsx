@@ -7,6 +7,7 @@ interface ResultsDisplayProps {
   originalImageUrl?: string;
   optimizedImageUrl?: string;
   optimizedBlob?: Blob;
+  originalFileSize?: number;
   isZip?: boolean;
   onReset: () => void;
 }
@@ -72,7 +73,7 @@ function DownloadButton({ blob, filename, isZip }: { blob: Blob; filename: strin
 
 }
 
-export function ResultsDisplay({ result, originalFile, originalImageUrl, optimizedImageUrl, optimizedBlob, isZip, onReset }: ResultsDisplayProps) {
+export function ResultsDisplay({ result, originalFile, originalImageUrl, optimizedImageUrl, optimizedBlob, originalFileSize, isZip, onReset }: ResultsDisplayProps) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -82,12 +83,12 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
   };
 
   const calculateSavings = () => {
-    // Ensure we have valid file sizes
-    const originalSize = originalFile.size;
+    // Use the accurate original file size from backend, fallback to File.size
+    const originalSize = originalFileSize || originalFile.size;
     const optimizedSize = result.metadata.file_size_bytes;
-    
+
     if (originalSize <= 0 || optimizedSize <= 0) return null;
-    
+
     // Handle case where optimized file is larger (shouldn't happen but just in case)
     if (optimizedSize >= originalSize) {
       return {
@@ -96,7 +97,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
         isIncrease: true
       };
     }
-    
+
     const savings = originalSize - optimizedSize;
     const percentage = Math.round((savings / originalSize) * 100);
     return { bytes: savings, percentage, isIncrease: false };
@@ -165,7 +166,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 font-semibold">File size</span>
-                  <span className="font-mono text-lg font-bold text-blue-600">{formatFileSize(originalFile.size)}</span>
+                  <span className="font-mono text-lg font-bold text-blue-600">{formatFileSize(originalFileSize || originalFile.size)}</span>
                 </div>
               </div>
               <div className="bg-blue-50 rounded-lg p-4">
@@ -273,7 +274,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
                   </div>
                   <div className="text-center bg-blue-100 rounded-xl p-3">
                     <p className="text-sm font-bold text-blue-800">
-                      {formatFileSize(originalFile.size)}
+                      {formatFileSize(originalFileSize || originalFile.size)}
                     </p>
                   </div>
                 </div>

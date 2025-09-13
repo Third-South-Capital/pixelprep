@@ -56,10 +56,10 @@ class ApiService {
   }
 
   async optimizeImage(
-    file: File, 
-    preset: PresetName, 
+    file: File,
+    preset: PresetName,
     includeMetadata: boolean = true
-  ): Promise<{ blob: Blob; metadata: OptimizationResult; isZip: boolean }> {
+  ): Promise<{ blob: Blob; metadata: OptimizationResult; isZip: boolean; originalFileSize?: number }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('preset', preset);
@@ -81,34 +81,39 @@ class ApiService {
     }
 
     const blob = await response.blob();
-    
+
+    // Get the actual original file size from backend headers if available
+    const backendOriginalSize = response.headers.get('X-Original-File-Size');
+    const originalFileSize = backendOriginalSize ? parseInt(backendOriginalSize) : file.size;
+
     if (format === 'zip') {
       // Extract metadata from ZIP using response headers for accurate file size
-      const metadata = await this.extractMetadataFromZip(blob, response, file, preset);
-      return { blob, metadata, isZip: true };
+      const metadata = await this.extractMetadataFromZip(blob, response, file, preset, originalFileSize);
+      return { blob, metadata, isZip: true, originalFileSize };
     } else {
       // Create metadata from response headers
-      const metadata = this.createMetadataFromHeaders(response, file, preset);
-      return { blob, metadata, isZip: false };
+      const metadata = this.createMetadataFromHeaders(response, file, preset, originalFileSize);
+      return { blob, metadata, isZip: false, originalFileSize };
     }
   }
 
-  private createMetadataFromHeaders(response: Response, originalFile: File, preset: PresetName): OptimizationResult {
+  private createMetadataFromHeaders(response: Response, originalFile: File, preset: PresetName, originalFileSize?: number): OptimizationResult {
     const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
     const dimensions = response.headers.get('X-Dimensions') || this.getPresetDimensions(preset);
-    
+
     // Try multiple headers to get file size
     let fileSize = 0;
     const xFileSize = response.headers.get('X-File-Size');
     const contentLength = response.headers.get('content-length');
-    
+
     if (xFileSize && !isNaN(parseInt(xFileSize))) {
       fileSize = parseInt(xFileSize);
     } else if (contentLength && !isNaN(parseInt(contentLength))) {
       fileSize = parseInt(contentLength);
     } else {
       // Fallback: estimate based on original file size and preset
-      fileSize = Math.round(originalFile.size * this.getCompressionRatio(preset));
+      const baseSize = originalFileSize || originalFile.size;
+      fileSize = Math.round(baseSize * this.getCompressionRatio(preset));
     }
     
     return {
@@ -131,10 +136,11 @@ class ApiService {
   }
 
   private async extractMetadataFromZip(
-    _zipBlob: Blob, 
-    response: Response, 
-    originalFile: File, 
-    preset: PresetName
+    _zipBlob: Blob,
+    response: Response,
+    originalFile: File,
+    preset: PresetName,
+    originalFileSize?: number
   ): Promise<OptimizationResult> {
     // Get actual optimized file size from response headers
     const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
@@ -148,7 +154,8 @@ class ApiService {
       optimizedSize = parseInt(xFileSize);
     } else {
       // Fallback: estimate based on original file size and preset
-      optimizedSize = Math.round(originalFile.size * this.getCompressionRatio(preset));
+      const baseSize = originalFileSize || originalFile.size;
+      optimizedSize = Math.round(baseSize * this.getCompressionRatio(preset));
     }
     
     return {

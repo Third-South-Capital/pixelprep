@@ -11,7 +11,7 @@ from PIL import Image, UnidentifiedImageError
 from ..processors.instagram import InstagramSquareProcessor
 from ..storage.persistent import PersistentStorage
 from ..storage.temporary import TemporaryStorage
-from .auth import User, get_current_user, get_current_user_optional
+from .auth import AUTH_REQUIRED, User, get_current_user, get_current_user_optional
 
 router = APIRouter(prefix="/optimize", tags=["optimization"])
 
@@ -88,6 +88,7 @@ async def optimize_image(
                 headers={
                     "Content-Disposition": f"attachment; filename=pixelprep_{preset}.zip",
                     "X-Original-Filename": result["original_filename"],
+                    "X-Original-File-Size": str(result["original_file_size"]),
                     "X-Preset": preset,
                     "X-File-Size": str(len(result["image_data"])),
                     "X-Dimensions": dimensions,
@@ -135,6 +136,7 @@ async def _process_image(
     try:
         # Read file content
         content = await file.read()
+        original_file_size = len(content)
 
         # Open image with PIL
         try:
@@ -204,6 +206,7 @@ async def _process_image(
                 "image_data": processed_content.getvalue(),
                 "metadata": metadata,
                 "original_filename": file.filename,
+                "original_file_size": original_file_size,
                 "processor_config": processor.get_preset_config(),
                 "storage_type": "persistent",
                 "user_id": current_user.id,
@@ -231,6 +234,7 @@ async def _process_image(
                 "image_data": processed_content.getvalue(),
                 "metadata": metadata,
                 "original_filename": file.filename,
+                "original_file_size": original_file_size,
                 "processor_config": processor.get_preset_config(),
                 "storage_type": "temporary",
             }
@@ -278,6 +282,7 @@ async def _create_image_response(
         headers={
             "Content-Disposition": f"attachment; filename={optimized_filename}",
             "X-Original-Filename": result["original_filename"],
+            "X-Original-File-Size": str(result["original_file_size"]),
             "X-Preset": preset,
             "X-File-Size": str(len(result["image_data"])),
             "X-Dimensions": dimensions,

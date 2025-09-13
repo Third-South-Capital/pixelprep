@@ -59,6 +59,9 @@ GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")  # For OAuth callback
 
+# Authentication Toggle - Controls whether auth is required for the app
+AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "false").lower() == "true"
+
 # Validate environment on module import (fail fast)
 AUTH_ENABLED = False
 try:
@@ -67,6 +70,16 @@ try:
 except ValueError as e:
     print(f"⚠️  AUTH WARNING: {e}")
     AUTH_ENABLED = False
+
+# Auth Status Summary
+if AUTH_REQUIRED and not AUTH_ENABLED:
+    print(f"🚨 AUTH ERROR: AUTH_REQUIRED=true but authentication is not properly configured!")
+elif AUTH_REQUIRED and AUTH_ENABLED:
+    print(f"🔐 AUTH MODE: Authentication required and properly configured")
+elif not AUTH_REQUIRED and AUTH_ENABLED:
+    print(f"🔓 MIXED MODE: Authentication available but not required (optional)")
+else:
+    print(f"🚪 ANONYMOUS MODE: Authentication disabled, anonymous access only")
 
 
 # Pydantic Models
@@ -292,6 +305,16 @@ async def get_current_user_optional(
 @router.get("/github/login")
 async def github_login(request: Request):
     """Initiate GitHub OAuth flow."""
+
+    # If auth is not required, return a message indicating anonymous mode
+    if not AUTH_REQUIRED:
+        return {
+            "message": "Authentication not required - running in anonymous mode",
+            "auth_required": False,
+            "anonymous_access": True,
+            "auth_url": None
+        }
+
     if not GITHUB_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -521,9 +544,12 @@ async def auth_health():
 
     return {
         "status": "healthy",
+        "auth_required": AUTH_REQUIRED,
+        "auth_enabled": AUTH_ENABLED,
         "github_oauth": github_configured,
         "jwt_configured": bool(JWT_SECRET_KEY),
         "supabase_connected": True,  # We'll update this when we test the connection
+        "mode": "authenticated" if AUTH_REQUIRED else "anonymous_optional"
     }
 
 

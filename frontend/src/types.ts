@@ -78,6 +78,7 @@ export interface UploadState {
   originalImageUrl?: string;
   optimizedImageUrl?: string;
   optimizedBlob?: Blob;
+  originalFileSize?: number;
   isZip?: boolean;
   imageAnalysis?: ImageAnalysis;
   recommendation?: PresetRecommendation;

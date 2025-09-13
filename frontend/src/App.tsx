@@ -9,6 +9,7 @@ import { UserHeader } from './components/UserHeader';
 import { DarkModeToggle } from './components/DarkModeToggle';
 import { apiService } from './services/api';
 import { authService, type PixelPrepUser } from './services/auth';
+import { configService } from './services/config';
 import { storageService } from './services/storage';
 import { getImageDimensions, analyzeImage, recommendPreset } from './utils/imageAnalysis';
 import type { UploadState, ProcessorsResponse, PresetName } from './types';
@@ -29,6 +30,8 @@ function App() {
   const [usageCount, setUsageCount] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [authEnabled, setAuthEnabled] = useState(false);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -36,8 +39,19 @@ function App() {
     // Initialize the app
     const initializeApp = async () => {
       try {
-        // First, check if this is an OAuth callback
-        if (authService.hasAuthCallback()) {
+        // Check auth configuration first
+        console.log('🔍 [APP] Checking auth configuration...');
+        const authConfig = await configService.getAuthConfig();
+        setAuthRequired(authConfig.auth_required);
+        setAuthEnabled(authConfig.auth_enabled);
+        console.log('🔍 [APP] Auth config:', {
+          required: authConfig.auth_required,
+          enabled: authConfig.auth_enabled,
+          mode: authConfig.mode
+        });
+
+        // First, check if this is an OAuth callback (only if auth is enabled)
+        if (authConfig.auth_enabled && authService.hasAuthCallback()) {
           console.log('🔍 [APP] OAuth callback detected, processing...');
           await authService.handleAuthCallback();
         }
@@ -46,25 +60,27 @@ function App() {
         const processorsData = await apiService.getProcessors();
         setProcessors(processorsData);
 
-        // Set up Supabase auth state listener
-        unsubscribe = authService.onAuthStateChange((user) => {
-          console.log('🔍 [AUTH STATE] User changed:', user?.email || 'anonymous');
-          setUser(user);
+        // Set up Supabase auth state listener (only if auth is enabled)
+        if (authConfig.auth_enabled) {
+          unsubscribe = authService.onAuthStateChange((user) => {
+            console.log('🔍 [AUTH STATE] User changed:', user?.email || 'anonymous');
+            setUser(user);
 
-          // If user signed out, reload usage count
-          if (!user) {
-            const currentUsage = storageService.getUsageCount();
-            setUsageCount(currentUsage);
-            console.log('🔍 [DEBUG] User signed out, usage count:', currentUsage);
-          } else {
-            // User signed in, close any login prompts
-            setShowLoginPrompt(false);
-            console.log('🔍 [DEBUG] User signed in, closing prompts');
-          }
-        });
+            // If user signed out, reload usage count
+            if (!user) {
+              const currentUsage = storageService.getUsageCount();
+              setUsageCount(currentUsage);
+              console.log('🔍 [DEBUG] User signed out, usage count:', currentUsage);
+            } else {
+              // User signed in, close any login prompts
+              setShowLoginPrompt(false);
+              console.log('🔍 [DEBUG] User signed in, closing prompts');
+            }
+          });
+        }
 
-        // Load initial usage count for anonymous users
-        if (!authService.isAuthenticated()) {
+        // Load initial usage count for anonymous users (if auth not required or not authenticated)
+        if (!authConfig.auth_required && (!authConfig.auth_enabled || !authService.isAuthenticated())) {
           const currentUsage = storageService.getUsageCount();
           setUsageCount(currentUsage);
           console.log('🔍 [DEBUG] Initial usage count:', currentUsage);
@@ -153,7 +169,7 @@ function App() {
     setUploadState(prev => ({ ...prev, isUploading: true, error: null }));
 
     try {
-      const { blob, metadata, isZip } = await apiService.optimizeImage(
+      const { blob, metadata, isZip, originalFileSize } = await apiService.optimizeImage(
         uploadState.file,
         uploadState.preset,
         uploadState.includeMetadata
@@ -171,28 +187,29 @@ function App() {
         result: metadata,
         optimizedImageUrl,
         optimizedBlob: blob,
+        originalFileSize,
         isZip
       }));
 
-      // Track usage for anonymous users and show login prompt if needed
-      if (!authService.isAuthenticated()) {
+      // Track usage for anonymous users and show login prompt if needed (only if auth is enabled)
+      if (authEnabled && !authService.isAuthenticated()) {
         const newUsageCount = storageService.incrementUsage();
         setUsageCount(newUsageCount);
         console.log('🔍 [DEBUG] Incremented usage count to:', newUsageCount);
         console.log('🔍 [DEBUG] localStorage content:', localStorage.getItem('pixelprep_usage'));
 
-        // Show login prompt after first optimization
-        if (newUsageCount === 1) {
+        // Show login prompt after first optimization (only if auth is required)
+        if (authRequired && newUsageCount === 1) {
           console.log('🔍 [DEBUG] First optimization completed - will show login prompt in 2 seconds');
           setTimeout(() => {
             console.log('🔍 [DEBUG] Showing login prompt now');
             setShowLoginPrompt(true);
           }, 2000); // Show prompt 2 seconds after successful optimization
         } else {
-          console.log('🔍 [DEBUG] Usage count is', newUsageCount, '- should show limit if >= 1');
+          console.log('🔍 [DEBUG] Usage count is', newUsageCount, '- auth required:', authRequired);
         }
       } else {
-        console.log('🔍 [DEBUG] User is authenticated - no usage tracking needed');
+        console.log('🔍 [DEBUG] User is authenticated or auth is disabled - no usage tracking needed');
       }
     } catch (error) {
       setUploadState(prev => ({
@@ -271,7 +288,7 @@ function App() {
         {/* Header with user info and dark mode toggle */}
         <div className="flex justify-between items-center mb-6">
           <DarkModeToggle />
-          {user && <UserHeader user={user} onLogout={handleLogout} />}
+          {authEnabled && user && <UserHeader user={user} onLogout={handleLogout} />}
         </div>
 
         <div className="text-center mb-12">
@@ -282,8 +299,8 @@ function App() {
             Professional image optimization designed for <span className="font-semibold accent-primary">artists</span>. Transform your artwork for Instagram, jury submissions, websites, and more – with the quality you demand.
           </p>
 
-          {/* Usage indicator for anonymous users */}
-          {!user && usageCount > 0 && (
+          {/* Usage indicator for anonymous users (only show if auth is enabled) */}
+          {authEnabled && !user && usageCount > 0 && (
             <div className="mt-4">
               <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 px-4 py-2 rounded-2xl text-sm font-medium">
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
@@ -301,6 +318,16 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Anonymous mode indicator (when auth not required) */}
+          {!authRequired && (
+            <div className="mt-4">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-2xl text-sm font-medium">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Free unlimited access - no sign-up required
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="max-w-5xl mx-auto">
@@ -311,6 +338,7 @@ function App() {
               originalImageUrl={uploadState.originalImageUrl}
               optimizedImageUrl={uploadState.optimizedImageUrl}
               optimizedBlob={uploadState.optimizedBlob}
+              originalFileSize={uploadState.originalFileSize}
               isZip={uploadState.isZip}
               onReset={resetUpload}
             />
@@ -413,7 +441,7 @@ function App() {
       <Figmaman />
 
       {/* Login Prompt Modal */}
-      {showLoginPrompt && (
+      {authEnabled && showLoginPrompt && (
         <LoginPrompt
           usageCount={usageCount}
           onClose={handleCloseLoginPrompt}
