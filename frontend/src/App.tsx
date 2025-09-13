@@ -34,6 +34,12 @@ function App() {
     // Initialize the app
     const initializeApp = async () => {
       try {
+        // First, check if this is an OAuth callback
+        if (authService.hasAuthCallback()) {
+          console.log('🔍 [APP] OAuth callback detected, processing...');
+          await authService.handleAuthCallback();
+        }
+
         // Load processors
         const processorsData = await apiService.getProcessors();
         setProcessors(processorsData);

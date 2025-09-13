@@ -25,6 +25,9 @@ class AuthService {
         // Notify listeners with user data
         const pixelPrepUser = this.convertSupabaseUser(session.user);
         this.authStateListeners.forEach(listener => listener(pixelPrepUser));
+
+        // Clean up URL hash after successful auth
+        this.cleanupAuthHash();
       } else if (event === 'SIGNED_OUT') {
         // Notify listeners that user signed out
         this.authStateListeners.forEach(listener => listener(null));
@@ -162,6 +165,58 @@ class AuthService {
       avatar_url: avatarUrl,
       github_username: githubUsername
     };
+  }
+
+  // Handle OAuth callback tokens from URL hash
+  async handleAuthCallback(): Promise<void> {
+    const hash = window.location.hash;
+    console.log('🔍 [SUPABASE AUTH] Checking URL hash for auth tokens:', hash ? 'present' : 'none');
+
+    if (hash && (hash.includes('access_token') || hash.includes('error'))) {
+      console.log('🔍 [SUPABASE AUTH] Processing auth callback from hash');
+
+      try {
+        // Supabase automatically processes the hash via onAuthStateChange
+        // We just need to wait for it to complete and get the session
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('🔍 [SUPABASE AUTH] Session retrieval error:', error);
+          throw error;
+        }
+
+        if (session) {
+          console.log('🔍 [SUPABASE AUTH] Successfully processed callback, user:', session.user.email);
+        } else {
+          console.log('🔍 [SUPABASE AUTH] No session found after callback processing');
+        }
+      } catch (error) {
+        console.error('🔍 [SUPABASE AUTH] Callback processing failed:', error);
+        this.cleanupAuthHash(); // Clean up even on error
+      }
+    }
+  }
+
+  // Clean up URL hash after authentication
+  private cleanupAuthHash(): void {
+    if (window.location.hash && (
+      window.location.hash.includes('access_token') ||
+      window.location.hash.includes('refresh_token') ||
+      window.location.hash.includes('error')
+    )) {
+      console.log('🔍 [SUPABASE AUTH] Cleaning up auth hash from URL');
+
+      // Remove the hash without reloading the page
+      const url = new URL(window.location.href);
+      url.hash = '';
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }
+
+  // Check if current URL has auth callback parameters
+  hasAuthCallback(): boolean {
+    const hash = window.location.hash;
+    return Boolean(hash && (hash.includes('access_token') || hash.includes('error')));
   }
 
   // Legacy method compatibility - now just redirects to Supabase OAuth
