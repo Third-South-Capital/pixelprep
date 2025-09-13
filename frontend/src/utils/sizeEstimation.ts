@@ -43,6 +43,10 @@ export function estimateFileSize(
     quick_compress: {
       factor: 0.3, // 70% reduction target
       note: "Smart compression with same dimensions"
+    },
+    custom: {
+      factor: 0.5, // Variable compression based on custom settings
+      note: "Custom optimization based on your settings"
     }
   };
 

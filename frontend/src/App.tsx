@@ -15,7 +15,7 @@ import { authService, type PixelPrepUser } from './services/auth';
 import { configService } from './services/config';
 import { storageService } from './services/storage';
 import { getImageDimensions, analyzeImage, recommendPreset } from './utils/imageAnalysis';
-import type { UploadState, ProcessorsResponse, PresetName, OptimizationMode, CustomOptimization } from './types';
+import type { UploadState, ProcessorsResponse, PresetName } from './types';
 
 function App() {
   const [processors, setProcessors] = useState<ProcessorsResponse | null>(null);

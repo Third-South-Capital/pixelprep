@@ -113,7 +113,7 @@ export function OnboardingTooltip({
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { isActive, currentStep, completedSteps } = useOnboarding();
 
