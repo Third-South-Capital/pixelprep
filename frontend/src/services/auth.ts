@@ -204,7 +204,6 @@ class AuthService {
     try {
       // Use Supabase's internal client state instead of manually accessing localStorage
       // This is more reliable and handles the correct key format
-      const session = supabase.auth.getSession();
 
       // Since getSession() is async but we need sync access, we'll check multiple possible localStorage keys
       const possibleKeys = [
