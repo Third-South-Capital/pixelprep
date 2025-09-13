@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,12 +11,39 @@ app = FastAPI(
     version="0.1.0"
 )
 
+# Configure CORS based on environment
+def get_cors_origins():
+    """Get allowed origins based on environment."""
+    origins = [
+        "http://localhost:3000",      # React dev server
+        "http://localhost:5173",      # Vite dev server
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
+    
+    # Add production frontend URL
+    production_frontend = os.getenv("PRODUCTION_FRONTEND_URL")
+    if production_frontend:
+        origins.append(production_frontend)
+    
+    # Add GitHub Pages URL
+    origins.extend([
+        "https://third-south-capital.github.io",
+        "https://third-south-capital.github.io/pixelprep"
+    ])
+    
+    # For development, allow all origins
+    if os.getenv("ENVIRONMENT", "development") == "development":
+        return ["*"]
+    
+    return origins
+
 # Add CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
