@@ -10,11 +10,45 @@ class ApiService {
     const token = await authService.getAccessToken();
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }
-  async getProcessors(): Promise<ProcessorsResponse> {
+
+  // Helper method to handle API calls with token refresh retry
+  private async makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = await this.getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/optimize/processors`, {
-      headers
+
+    let response = await fetch(url, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers
+      }
     });
+
+    // If we get a 401, try to refresh the token and retry once
+    if (response.status === 401 && authService.isAuthenticated()) {
+      console.log('🔍 [API] Got 401, attempting token refresh and retry...');
+
+      // Force token refresh
+      const refreshedToken = await authService.getAccessToken();
+
+      if (refreshedToken) {
+        const refreshedHeaders = { 'Authorization': `Bearer ${refreshedToken}` };
+
+        response = await fetch(url, {
+          ...options,
+          headers: {
+            ...refreshedHeaders,
+            ...options.headers
+          }
+        });
+
+        console.log('🔍 [API] Retry with refreshed token:', response.status);
+      }
+    }
+
+    return response;
+  }
+  async getProcessors(): Promise<ProcessorsResponse> {
+    const response = await this.makeAuthenticatedRequest(`${API_BASE_URL}/optimize/processors`);
     if (!response.ok) {
       throw new Error(`Failed to fetch processors: ${response.status}`);
     }
@@ -31,10 +65,8 @@ class ApiService {
     formData.append('preset', preset);
 
     const format = includeMetadata ? 'zip' : 'image';
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/optimize/?format=${format}`, {
+    const response = await this.makeAuthenticatedRequest(`${API_BASE_URL}/optimize/?format=${format}`, {
       method: 'POST',
-      headers,
       body: formData,
     });
 
@@ -224,12 +256,8 @@ class ApiService {
 
   // Authenticated user methods
   async getUserImages(limit: number = 20, offset: number = 0) {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(
-      `${API_BASE_URL}/optimize/images?limit=${limit}&offset=${offset}`,
-      {
-        headers
-      }
+    const response = await this.makeAuthenticatedRequest(
+      `${API_BASE_URL}/optimize/images?limit=${limit}&offset=${offset}`
     );
 
     if (!response.ok) {
@@ -240,10 +268,8 @@ class ApiService {
   }
 
   async deleteImage(imageId: string) {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/optimize/images/${imageId}`, {
-      method: 'DELETE',
-      headers
+    const response = await this.makeAuthenticatedRequest(`${API_BASE_URL}/optimize/images/${imageId}`, {
+      method: 'DELETE'
     });
 
     if (!response.ok) {
@@ -254,10 +280,7 @@ class ApiService {
   }
 
   async getUserUsage() {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/optimize/usage`, {
-      headers
-    });
+    const response = await this.makeAuthenticatedRequest(`${API_BASE_URL}/optimize/usage`);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch usage stats: ${response.status}`);

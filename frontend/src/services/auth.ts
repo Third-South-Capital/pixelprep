@@ -18,6 +18,15 @@ class AuthService {
     supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔍 [SUPABASE AUTH] State change:', event, session?.user?.email || 'no user');
 
+      // Debug token lifecycle
+      if (session) {
+        const expiresAt = new Date(session.expires_at! * 1000);
+        const timeUntilExpiry = session.expires_at! * 1000 - Date.now();
+        console.log('🔍 [TOKEN] Expires at:', expiresAt.toISOString());
+        console.log('🔍 [TOKEN] Time until expiry:', Math.round(timeUntilExpiry / 1000), 'seconds');
+        console.log('🔍 [TOKEN] Refresh token present:', !!session.refresh_token);
+      }
+
       if (event === 'SIGNED_IN' && session?.user) {
         // Clear usage count when user successfully authenticates
         storageService.resetUsage();
@@ -31,6 +40,11 @@ class AuthService {
       } else if (event === 'SIGNED_OUT') {
         // Notify listeners that user signed out
         this.authStateListeners.forEach(listener => listener(null));
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        console.log('🔍 [SUPABASE AUTH] Token refreshed successfully');
+        // Update listeners with refreshed session
+        const pixelPrepUser = this.convertSupabaseUser(session.user);
+        this.authStateListeners.forEach(listener => listener(pixelPrepUser));
       }
     });
   }
@@ -85,7 +99,23 @@ class AuthService {
 
   async getSession(): Promise<Session | null> {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('🔍 [SUPABASE AUTH] Get session error:', error);
+        return null;
+      }
+
+      // Check if session is valid and not expired
+      if (session && session.expires_at) {
+        const timeUntilExpiry = (session.expires_at * 1000) - Date.now();
+
+        if (timeUntilExpiry <= 0) {
+          console.log('🔍 [SUPABASE AUTH] Session expired, attempting refresh...');
+          return await this.refreshSessionIfNeeded();
+        }
+      }
+
       return session;
     } catch (error) {
       console.error('🔍 [SUPABASE AUTH] Get session error:', error);
@@ -93,9 +123,69 @@ class AuthService {
     }
   }
 
+  // Refresh session if needed and return new session
+  private async refreshSessionIfNeeded(): Promise<Session | null> {
+    try {
+      console.log('🔍 [SUPABASE AUTH] Refreshing session...');
+
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.error('🔍 [SUPABASE AUTH] Session refresh failed:', refreshError);
+        return null;
+      }
+
+      if (refreshData.session) {
+        console.log('🔍 [SUPABASE AUTH] Session refreshed successfully');
+        return refreshData.session;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('🔍 [SUPABASE AUTH] Refresh session error:', error);
+      return null;
+    }
+  }
+
   async getAccessToken(): Promise<string | null> {
-    const session = await this.getSession();
-    return session?.access_token || null;
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('🔍 [SUPABASE AUTH] Session retrieval error:', error);
+        return null;
+      }
+
+      if (!session) {
+        console.log('🔍 [SUPABASE AUTH] No active session found');
+        return null;
+      }
+
+      // Check if token is close to expiry (within 5 minutes)
+      const timeUntilExpiry = (session.expires_at! * 1000) - Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (timeUntilExpiry < fiveMinutes) {
+        console.log('🔍 [SUPABASE AUTH] Token expires soon, attempting refresh...');
+
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          console.error('🔍 [SUPABASE AUTH] Token refresh failed:', refreshError);
+          return session.access_token; // Return current token anyway
+        }
+
+        if (refreshData.session) {
+          console.log('🔍 [SUPABASE AUTH] Token refreshed successfully');
+          return refreshData.session.access_token;
+        }
+      }
+
+      return session.access_token;
+    } catch (error) {
+      console.error('🔍 [SUPABASE AUTH] Get access token error:', error);
+      return null;
+    }
   }
 
   isAuthenticated(): boolean {
@@ -173,11 +263,17 @@ class AuthService {
     console.log('🔍 [SUPABASE AUTH] Checking URL hash for auth tokens:', hash ? 'present' : 'none');
 
     if (hash && (hash.includes('access_token') || hash.includes('error'))) {
-      console.log('🔍 [SUPABASE AUTH] Processing auth callback from hash');
+      console.log('🔍 [SUPABASE AUTH] Processing auth callback from hash immediately');
 
       try {
-        // Supabase automatically processes the hash via onAuthStateChange
-        // We just need to wait for it to complete and get the session
+        // Force Supabase to process the hash immediately
+        // This triggers the auth state change event
+        await supabase.auth.getSession();
+
+        // Wait a brief moment for Supabase to process the hash
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Get the session after processing
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -187,6 +283,18 @@ class AuthService {
 
         if (session) {
           console.log('🔍 [SUPABASE AUTH] Successfully processed callback, user:', session.user.email);
+
+          // Debug the session immediately
+          const expiresAt = new Date(session.expires_at! * 1000);
+          const timeUntilExpiry = session.expires_at! * 1000 - Date.now();
+          console.log('🔍 [CALLBACK] Session established, expires:', expiresAt.toISOString());
+          console.log('🔍 [CALLBACK] Time until expiry:', Math.round(timeUntilExpiry / 1000), 'seconds');
+
+          // If token expires very soon, try to refresh immediately
+          if (timeUntilExpiry < 60000) { // Less than 1 minute
+            console.log('🔍 [CALLBACK] Token expires very soon, refreshing immediately...');
+            await supabase.auth.refreshSession();
+          }
         } else {
           console.log('🔍 [SUPABASE AUTH] No session found after callback processing');
         }
