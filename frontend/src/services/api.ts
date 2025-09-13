@@ -1,12 +1,19 @@
 import type { ProcessorsResponse, OptimizationResult, ApiError, PresetName } from '../types';
+import { storageService } from './storage';
 
-const API_BASE_URL = import.meta.env.PROD 
+const API_BASE_URL = import.meta.env.PROD
   ? 'https://pixelprep.onrender.com'
   : 'http://localhost:8000';
 
 class ApiService {
+  private getAuthHeaders(): HeadersInit {
+    const token = storageService.getAuthToken();
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
   async getProcessors(): Promise<ProcessorsResponse> {
-    const response = await fetch(`${API_BASE_URL}/optimize/processors`);
+    const response = await fetch(`${API_BASE_URL}/optimize/processors`, {
+      headers: this.getAuthHeaders()
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch processors: ${response.status}`);
     }
@@ -25,6 +32,7 @@ class ApiService {
     const format = includeMetadata ? 'zip' : 'image';
     const response = await fetch(`${API_BASE_URL}/optimize/?format=${format}`, {
       method: 'POST',
+      headers: this.getAuthHeaders(),
       body: formData,
     });
 
@@ -210,6 +218,47 @@ class ApiService {
     }
 
     return { isValid: true };
+  }
+
+  // Authenticated user methods
+  async getUserImages(limit: number = 20, offset: number = 0) {
+    const response = await fetch(
+      `${API_BASE_URL}/optimize/images?limit=${limit}&offset=${offset}`,
+      {
+        headers: this.getAuthHeaders()
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user images: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async deleteImage(imageId: string) {
+    const response = await fetch(`${API_BASE_URL}/optimize/images/${imageId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete image: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async getUserUsage() {
+    const response = await fetch(`${API_BASE_URL}/optimize/usage`, {
+      headers: this.getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch usage stats: ${response.status}`);
+    }
+
+    return response.json();
   }
 }
 
