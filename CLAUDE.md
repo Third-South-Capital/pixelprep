@@ -1,13 +1,14 @@
 # CLAUDE.md - PixelPrep
 
-<!-- 
+<!--
 User Context: ../CONTEXT.md
-Last Updated: 2025-09-12
-Status: PRODUCTION LIVE ✅ v1.0.0
+Last Updated: 2025-09-13
+Status: PRODUCTION LIVE ✅ v2.0.0
 Phase 1: COMPLETED ✅ (5 presets, 60+ tests)
 Phase 2: COMPLETED ✅ (Database integration validated 100%)
 Phase 3: COMPLETED ✅ (Frontend deployed & live)
-Current: Live production system serving users
+Phase 4: COMPLETED ✅ (EntryThingy design system integration)
+Current: Live production system with professional EntryThingy UI
 -->
 
 This file provides guidance to Claude Code when working with PixelPrep.
@@ -22,25 +23,26 @@ PixelPrep is a freemium image optimization tool for artists who need to resize/o
 ## 🚀 Production Deployment (LIVE)
 - **Live Frontend**: https://third-south-capital.github.io/pixelprep/
 - **Backend API**: https://pixelprep.onrender.com/
-- **Status**: Production Live v1.0.0 - Serving Users
-- **Last Updated**: 2025-09-12
+- **Status**: Production Live v2.0.0 - Serving Users
+- **Last Updated**: 2025-09-13
 - **Health Check**: Backend /health, Frontend responsive UI
 - **User Flow**: Anonymous upload → optimize → download (working)
-- **Auth Flow**: GitHub OAuth → JWT → persistent gallery (implemented)
+- **Auth Flow**: GitHub OAuth → Supabase → persistent gallery ✅ WORKING
 
 ## Technical Architecture
 
 ### Tech Stack (Production Ready)
-- **Backend**: Python 3.11, FastAPI, Pillow (PIL) 
+- **Backend**: Python 3.11, FastAPI, Pillow (PIL)
 - **Frontend**: React 19, TypeScript, TailwindCSS v3, Vite
+- **Design System**: EntryThingy professional UI with Outfit font, dark/light modes
 - **Dependencies**: `uv` (backend), `npm` (frontend)
 - **Testing**: `pytest` with colocated tests (`file--test.py`)
 - **Linting**: `ruff` (backend), `eslint` (frontend)
 - **Build**: `justfile` with required commands
-- **Hosting**: 
+- **Hosting**:
   - Backend: Render.com (https://pixelprep.onrender.com/)
   - Frontend: GitHub Pages (https://third-south-capital.github.io/pixelprep/)
-- **Ready**: Supabase (auth/db integration implemented but not enabled)
+- **Authentication**: Supabase Auth + GitHub OAuth (✅ ACTIVE)
 
 ### Directory Structure
 ```
@@ -68,6 +70,49 @@ pixelprep/
 │   │       └── temporary--test.py
 │   └── test_images/                 # Sample artwork files
 └── .github/workflows/ci.yml         # Lint + test automation
+```
+
+## 🎨 EntryThingy Design System (Phase 4)
+
+### Design Philosophy
+PixelPrep now implements the professional EntryThingy design system for brand consistency and superior user experience.
+
+### Key Features
+- **Typography**: Outfit font (variable weight 100-900) with proper hierarchy
+- **Color System**: Semantic CSS variables supporting light/dark modes
+  - Primary: Blue (#3b82f6) - Main CTAs, primary actions
+  - Secondary: Green (#16a34a) - Success states, positive feedback
+  - Accent: Purple (#6b21a8) - Gallery/admin functions
+  - Neutral: Gray scale - Text, backgrounds, borders
+- **Dark Mode**: Complete light/dark theme support with user preference persistence
+- **Layout**: EntryThingy spacing conventions (`max-w-5xl`, `py-16`, `space-y-8`)
+- **Components**: Professional buttons, cards, forms matching EntryThingy patterns
+
+### Implementation Files
+```
+frontend/src/
+├── index.css                    # Complete CSS variable system + Outfit font
+├── tailwind.config.js          # Extended colors, dark mode, font config
+├── hooks/useDarkMode.ts         # Dark mode state management
+├── components/DarkModeToggle.tsx # Theme toggle component
+├── App.tsx                      # EntryThingy layout + typography
+├── components/
+│   ├── UploadZone.tsx          # Professional card patterns
+│   ├── PresetSelector.tsx      # Clean grid layout
+│   └── UserHeader.tsx          # Dropdown interface
+```
+
+### CSS Variables
+```css
+/* Light Mode */
+--color-bg-primary: white
+--color-text-primary: #111827
+--color-accent-primary: #3b82f6
+
+/* Dark Mode */
+--color-bg-primary: #111827
+--color-text-primary: #f3f4f6
+--color-accent-primary: #60a5fa
 ```
 
 ## Core Image Presets (Phase 1)

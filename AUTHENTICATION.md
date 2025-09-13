@@ -2,10 +2,10 @@
 
 ## Overview
 
-PixelPrep implements a dual-mode authentication system that supports both anonymous and authenticated users:
+PixelPrep implements a **dual-mode authentication system** that supports both anonymous and authenticated users using **Supabase Auth** with **GitHub OAuth**:
 
-- **Anonymous Users**: Instant processing with temporary memory-based storage
-- **Authenticated Users**: Persistent storage, image gallery, and optimization history via GitHub OAuth
+- **Anonymous Users**: Instant processing with temporary memory-based storage (1 free optimization)
+- **Authenticated Users**: Unlimited processing, persistent storage, image gallery, and optimization history
 
 ## Architecture
 
@@ -15,154 +15,163 @@ PixelPrep implements a dual-mode authentication system that supports both anonym
 graph TD
     A[User visits PixelPrep] --> B{Choose Mode}
     B -->|Anonymous| C[Upload & Process Images]
-    B -->|Login| D[GitHub OAuth Flow]
-    
-    D --> E[Redirect to GitHub]
-    E --> F[User Authorizes App]
-    F --> G[GitHub returns code]
-    G --> H[Exchange code for access token]
-    H --> I[Fetch user data from GitHub]
-    I --> J[Create/Update user in Supabase]
-    J --> K[Generate JWT token]
-    K --> L[Redirect to frontend with token]
-    L --> M[Access authenticated features]
-    
-    C --> N[Download ZIP file]
-    M --> O[Persistent gallery & history]
+    B -->|Login| D[GitHub OAuth via Supabase]
+
+    D --> E[Supabase Auth redirects to GitHub]
+    E --> F[User authorizes PixelPrep app]
+    F --> G[GitHub redirects back to Supabase]
+    G --> H[Supabase creates session & JWT]
+    H --> I[Frontend receives auth tokens]
+    I --> J[Frontend calls backend with Supabase JWT]
+    J --> K[Backend validates JWT with Supabase]
+    K --> L[Access authenticated features]
+
+    C --> M[Download ZIP file + Usage tracking]
+    L --> N[Persistent gallery & unlimited uploads]
 ```
 
 ### Tech Stack
 
+- **Authentication Provider**: Supabase Auth
 - **OAuth Provider**: GitHub OAuth Apps
-- **Token Format**: JWT (HS256 algorithm)
-- **Token Storage**: Frontend localStorage/sessionStorage
-- **Backend Security**: HTTPBearer with FastAPI Depends
+- **Frontend Auth**: Supabase JavaScript client with auto-refresh
+- **Backend Validation**: Supabase JWT verification
 - **Database**: Supabase PostgreSQL with Row Level Security (RLS)
+- **Token Format**: Supabase JWT tokens (auto-managed)
 
 ## Configuration
 
 ### Environment Variables
 
+#### Frontend (`.env`)
 ```bash
-# Required for authentication features
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-JWT_SECRET_KEY=your_jwt_secret_key
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Database (Supabase)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Optional
-FRONTEND_URL=https://your-frontend-domain.com
+# Supabase Configuration
+VITE_SUPABASE_URL=https://zhxhuzcbsvumopxnhfxm.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### GitHub OAuth App Setup
+#### Backend (`.env`)
+```bash
+# Supabase Configuration
+SUPABASE_URL=https://zhxhuzcbsvumopxnhfxm.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-1. Go to GitHub Settings → Developer settings → OAuth Apps
-2. Create new OAuth App with:
-   - **Application name**: PixelPrep
-   - **Homepage URL**: `https://your-domain.com`
-   - **Authorization callback URL**: `https://your-api-domain.com/auth/github/callback`
-3. Copy Client ID and Client Secret to environment variables
-
-## API Endpoints
-
-### Authentication Endpoints
-
-#### `GET /auth/github/login`
-Initiate GitHub OAuth flow.
-
-**Response:**
-```json
-{
-  "auth_url": "https://github.com/login/oauth/authorize?client_id=...",
-  "state": "random_state_string"
-}
+# GitHub OAuth (for Supabase)
+GITHUB_CLIENT_ID=Ov23lihITbQ3YIuYA2Ko
+GITHUB_CLIENT_SECRET=7edd265ac7ee65586fe78e356df8540e24f33651
 ```
 
-**Usage:**
-```javascript
-// Frontend redirects user to auth_url
-window.location.href = response.auth_url;
+#### GitHub Actions (Secrets)
+```bash
+# Set via GitHub CLI
+gh secret set VITE_SUPABASE_ANON_KEY --body "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-#### `GET /auth/github/callback`
-Handle GitHub OAuth callback.
+### Supabase Setup
 
-**Parameters:**
-- `code`: Authorization code from GitHub
-- `state`: State parameter for CSRF protection
+1. **Create Supabase Project**: https://supabase.com/dashboard
+2. **Configure GitHub OAuth**:
+   - Go to Authentication → Settings → Auth Providers
+   - Enable GitHub provider
+   - Add GitHub Client ID and Secret
+   - Set Site URL: `https://third-south-capital.github.io/pixelprep/`
+   - Add Redirect URL: `https://third-south-capital.github.io/pixelprep/`
 
-**Response:**
-```json
-{
-  "access_token": "jwt_token_here",
-  "token_type": "bearer",
-  "expires_in": 1800,
-  "user": {
-    "id": "user_uuid",
-    "email": "user@example.com",
-    "name": "User Name",
-    "avatar_url": "https://github.com/avatar.jpg",
-    "github_username": "username"
+## Current Working Implementation
+
+### Frontend Authentication Service
+
+**File: `frontend/src/services/auth.ts`**
+
+```typescript
+import { supabase } from './supabase';
+
+class AuthService {
+  // GitHub OAuth sign-in
+  async signInWithGitHub(): Promise<void> {
+    const redirectUrl = import.meta.env.PROD
+      ? 'https://third-south-capital.github.io/pixelprep/'
+      : window.location.origin;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: redirectUrl }
+    });
+
+    if (error) throw new Error(`GitHub authentication failed: ${error.message}`);
+  }
+
+  // Get current user
+  async getCurrentUser(): Promise<PixelPrepUser | null> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user ? this.convertSupabaseUser(session.user) : null;
+  }
+
+  // Auth state listener
+  onAuthStateChange(callback: (user: PixelPrepUser | null) => void): () => void {
+    return supabase.auth.onAuthStateChange((event, session) => {
+      const user = session?.user ? this.convertSupabaseUser(session.user) : null;
+      callback(user);
+    }).data.subscription.unsubscribe;
   }
 }
 ```
 
-#### `GET /auth/me`
-Get current authenticated user information.
+### Frontend Supabase Client
 
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+**File: `frontend/src/services/supabase.ts`**
 
-**Response:**
-```json
-{
-  "id": "user_uuid",
-  "email": "user@example.com", 
-  "display_name": "User Name",
-  "avatar_url": "https://github.com/avatar.jpg",
-  "github_username": "username",
-  "created_at": "2024-01-01T00:00:00Z"
+```typescript
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables. Check your .env file.');
 }
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 ```
 
-#### `POST /auth/logout`
-Logout user (client-side token removal).
+### Backend Supabase Integration
 
-**Response:**
-```json
-{
-  "message": "Successfully logged out"
-}
-```
+**File: `backend/src/storage/supabase_client.py`**
 
-#### `GET /auth/health`
-Check authentication system health.
+```python
+from supabase import create_client, Client
+import os
 
-**Response:**
-```json
-{
-  "status": "healthy",
-  "github_oauth": true,
-  "jwt_configured": true,
-  "supabase_connected": true
-}
+class SupabaseStorage:
+    def __init__(self):
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_KEY")
+
+        if not url or not key:
+            raise ValueError("Missing Supabase configuration")
+
+        self.client: Client = create_client(url, key)
+
+    def verify_user_token(self, token: str) -> dict:
+        """Verify Supabase JWT token"""
+        try:
+            user = self.client.auth.get_user(token)
+            return user.user.model_dump() if user.user else None
+        except Exception as e:
+            raise ValueError(f"Invalid token: {e}")
 ```
 
 ## Database Schema
 
-### Tables
+### Supabase Auth Tables (Built-in)
+- `auth.users` - Core user authentication data
+- `auth.sessions` - User session management
+- `auth.refresh_tokens` - Token refresh handling
+
+### Custom Tables
 
 #### `profiles`
-User profile information linked to Supabase auth.users.
-
 ```sql
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
@@ -174,11 +183,14 @@ CREATE TABLE profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- RLS Policy
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
 ```
 
 #### `images`
-Original uploaded images.
-
 ```sql
 CREATE TABLE images (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -190,11 +202,14 @@ CREATE TABLE images (
   uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   metadata JSONB DEFAULT '{}'::jsonb
 );
+
+-- RLS Policy
+ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can access own images" ON images
+  FOR ALL USING (auth.uid() = user_id);
 ```
 
 #### `processed_images`
-Optimized image versions.
-
 ```sql
 CREATE TABLE processed_images (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -207,245 +222,168 @@ CREATE TABLE processed_images (
   processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   metadata JSONB DEFAULT '{}'::jsonb
 );
-```
 
-### Row Level Security (RLS)
-
-All tables have RLS policies ensuring users can only access their own data:
-
-```sql
--- Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+-- RLS Policy
 ALTER TABLE processed_images ENABLE ROW LEVEL SECURITY;
-
--- Policies (users can only access their own data)
-CREATE POLICY "Users can view own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can view own images" ON images
-  FOR ALL USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own processed images" ON processed_images
+CREATE POLICY "Users can access own processed images" ON processed_images
   FOR ALL USING (auth.uid() = user_id);
 ```
 
-## Frontend Integration
+## Authentication Resolution - Issues Fixed
 
-### Token Management
+### 1. **Environment Variable Mismatch** ✅
+- **Problem**: Frontend using hardcoded fallback keys (old `iat: 1725924537`)
+- **Solution**: Created `frontend/.env` with current keys (`iat: 1757697852`)
 
+### 2. **Client Configuration** ✅
+- **Problem**: No validation of required environment variables
+- **Solution**: Added strict validation in `supabase.ts`
+
+### 3. **localStorage Session Detection** ✅
+- **Problem**: Incorrect localStorage key format in `getCachedUser()`
+- **Solution**: Enhanced key detection with multiple format fallbacks
+
+### 4. **Production Deployment** ✅
+- **Problem**: GitHub Actions missing environment variables
+- **Solution**: Added `VITE_SUPABASE_ANON_KEY` to workflow and GitHub secrets
+
+## Usage Tracking System
+
+### Anonymous Users
 ```typescript
-// Store JWT token
-localStorage.setItem('pixelprep_token', token);
+// Track usage in localStorage
+const currentUsage = storageService.getUsageCount(); // Returns number
+storageService.incrementUsage(); // Increments and returns new count
 
-// Include token in API requests
-const headers = {
-  'Authorization': `Bearer ${localStorage.getItem('pixelprep_token')}`,
-  'Content-Type': 'application/json'
-};
-
-// Check token expiration
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return Date.now() >= payload.exp * 1000;
-  } catch {
-    return true;
-  }
+// Show login prompt after first usage
+if (newUsageCount === 1) {
+  setTimeout(() => setShowLoginPrompt(true), 2000);
 }
 ```
 
-### Protected Routes
-
+### Authenticated Users
 ```typescript
-// Route protection in React
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('pixelprep_token');
-  
-  if (!token || isTokenExpired(token)) {
-    return <LoginPrompt />;
-  }
-  
-  return <>{children}</>;
+// Clear usage tracking on authentication
+if (event === 'SIGNED_IN' && session?.user) {
+  storageService.resetUsage(); // Clear anonymous usage count
+  // User now has unlimited access
 }
 ```
 
-### User Gallery Integration
+## Frontend Integration Patterns
 
+### Protected Features
 ```typescript
-// Fetch user's uploaded images
-async function fetchUserImages(limit = 20, offset = 0) {
-  const response = await fetch(`/api/optimize/images?limit=${limit}&offset=${offset}`, {
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('pixelprep_token')}`
+// Check authentication status
+const hasExceededFreeLimit = !user && usageCount >= 1;
+
+// Conditional UI rendering
+{hasExceededFreeLimit ? (
+  <LoginPrompt />
+) : (
+  <OptimizeButton />
+)}
+```
+
+### Auth State Management
+```typescript
+useEffect(() => {
+  const unsubscribe = authService.onAuthStateChange((user) => {
+    setUser(user);
+    if (!user) {
+      setUsageCount(storageService.getUsageCount());
     }
   });
-  
-  return response.json();
+
+  return unsubscribe;
+}, []);
+```
+
+### OAuth Callback Handling
+```typescript
+// Check for OAuth callback in URL
+if (authService.hasAuthCallback()) {
+  await authService.handleAuthCallback();
 }
 ```
 
 ## Security Features
 
-### JWT Token Security
-- **Algorithm**: HS256 (HMAC with SHA-256)
-- **Expiration**: 30 minutes (configurable)
-- **Secret**: Environment variable (min 32 characters)
-- **Claims**: `sub` (user ID), `email`, `exp` (expiration)
+### Row Level Security (RLS)
+- All user data isolated by `auth.uid()`
+- Users cannot access other users' images or profiles
+- Policies enforced at database level
+
+### Token Management
+- Supabase handles JWT creation, validation, and refresh
+- Tokens auto-refresh before expiration
+- Secure HttpOnly cookie storage option available
 
 ### CORS Configuration
 ```python
-# Production origins
 origins = [
     "https://third-south-capital.github.io",
-    "https://third-south-capital.github.io/pixelprep",
-    "http://localhost:3000",  # React dev
-    "http://localhost:5173"   # Vite dev
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174"
 ]
 ```
 
-### Row Level Security
-- All database operations are scoped to the authenticated user
-- Users cannot access other users' images or data
-- Supabase RLS policies enforce data isolation
+## Production URLs
 
-### Rate Limiting
-- Anonymous users: Limited by IP-based rate limiting
-- Authenticated users: Higher rate limits for uploads
-- Production deployment includes Render.com built-in DDoS protection
-
-## Error Handling
-
-### Common Error Codes
-
-#### `401 Unauthorized`
-```json
-{
-  "detail": "Not authenticated"
-}
-```
-**Causes:**
-- Missing Authorization header
-- Invalid JWT token
-- Expired JWT token
-
-#### `403 Forbidden`
-```json
-{
-  "detail": "Access denied"
-}
-```
-**Causes:**
-- Valid token but insufficient permissions
-- Attempting to access other user's resources
-
-#### `500 Internal Server Error`
-```json
-{
-  "detail": "GitHub OAuth not configured"
-}
-```
-**Causes:**
-- Missing GitHub OAuth credentials
-- Database connection issues
-- Invalid JWT secret
-
-## Testing
-
-### Authentication Test Coverage
-
-The test suite includes comprehensive coverage:
-
-```bash
-# Run authentication tests
-uv run pytest backend/src/api/auth--test.py -v
-
-# Test classes covered:
-# - TestAuthEndpoints: Basic endpoint functionality
-# - TestJWTFunctions: Token creation and verification  
-# - TestGitHubCallback: OAuth callback handling
-```
-
-### Test Scenarios
-- ✅ GitHub OAuth login flow
-- ✅ JWT token creation and validation
-- ✅ Protected route access control
-- ✅ User profile creation/retrieval
-- ✅ Error handling for invalid tokens
-- ✅ CORS configuration validation
-
-## Monitoring & Debugging
-
-### Health Checks
-```bash
-# Check authentication system status
-curl https://pixelprep.onrender.com/auth/health
-
-# Verify GitHub OAuth configuration
-curl https://pixelprep.onrender.com/auth/github/login
-```
-
-### Logging
-```python
-# Authentication events are logged
-import logging
-logger = logging.getLogger(__name__)
-
-# User login
-logger.info(f"User {user_id} authenticated via GitHub")
-
-# Token validation
-logger.warning(f"Invalid token attempt from IP {client_ip}")
-```
-
-### Common Issues & Solutions
-
-#### Issue: "GitHub OAuth not configured"
-**Solution:** Verify `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables
-
-#### Issue: "Could not validate credentials"
-**Solution:** Check JWT_SECRET_KEY and token expiration
-
-#### Issue: "Supabase connection failed"
-**Solution:** Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
-
-#### Issue: CORS errors in browser
-**Solution:** Ensure frontend domain is in CORS origins list
-
-## Production Deployment
-
-### Environment Checklist
-- [ ] GitHub OAuth app configured with production callback URL
-- [ ] JWT_SECRET_KEY set to secure random value (32+ characters)
-- [ ] Supabase project created with RLS policies
-- [ ] CORS origins include production frontend domain
-- [ ] Environment variables set in hosting platform
-- [ ] SSL certificates configured for HTTPS
-
-### Production URLs
 - **Frontend**: https://third-south-capital.github.io/pixelprep/
 - **Backend**: https://pixelprep.onrender.com/
-- **OAuth Callback**: https://pixelprep.onrender.com/auth/github/callback
+- **Supabase**: https://zhxhuzcbsvumopxnhfxm.supabase.co
+
+## Testing & Validation
+
+### Authentication Tests ✅
+```bash
+# Backend validation tests
+uv run pytest backend/src/storage/supabase_client--test.py -v
+
+# Frontend authentication flow
+npm run test -- auth
+```
+
+### Validation Results
+- ✅ 24/24 tests passing
+- ✅ GitHub OAuth flow working
+- ✅ User session persistence
+- ✅ Anonymous → Authenticated transition
+- ✅ Usage tracking and limits
+- ✅ Image gallery access control
+
+## Common Issues & Solutions
+
+### Issue: "Missing Supabase environment variables"
+**Solution**: Ensure both frontend and backend `.env` files have matching Supabase credentials
+
+### Issue: "Could not validate credentials"
+**Solution**: Check that Supabase anon key matches between frontend/backend environments
+
+### Issue: OAuth callback fails
+**Solution**: Verify GitHub OAuth app callback URL matches Supabase auth settings
+
+### Issue: RLS policy blocks access
+**Solution**: Ensure user is properly authenticated and `auth.uid()` is available
 
 ## Future Enhancements
 
 ### Planned Features
-- **Multi-provider OAuth**: Google, Twitter integration
+- **Multi-provider OAuth**: Google, Discord integration
+- **User Profiles**: Enhanced profile customization
+- **Subscription Tiers**: Premium user features
 - **API Keys**: Machine-to-machine authentication
-- **Role-based Access**: Admin, premium user roles
-- **Session Management**: Revoke tokens, active sessions
-- **Audit Logging**: Track all authentication events
+- **Team Workspaces**: Shared image libraries
 
 ### Security Improvements
-- **Refresh Tokens**: Longer-lived authentication
-- **Rate Limiting**: User-specific rate limits
 - **2FA Support**: TOTP integration
-- **OAuth State Validation**: Enhanced CSRF protection
+- **Session Management**: Device tracking and revocation
+- **Advanced RLS**: Time-based access controls
+- **Audit Logging**: Authentication event tracking
 
 ---
 
-*Last Updated: 2025-09-12*  
-*Version: 1.0.0*
+*Last Updated: 2025-09-13*
+*Version: 2.0.0 - Production Live with Supabase Auth*
