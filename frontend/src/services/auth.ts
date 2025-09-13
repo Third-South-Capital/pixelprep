@@ -35,10 +35,17 @@ class AuthService {
   async signInWithGitHub(): Promise<void> {
     console.log('🔍 [SUPABASE AUTH] Initiating GitHub OAuth');
 
+    // For GitHub Pages, we need the full URL including the path
+    const redirectUrl = import.meta.env.PROD
+      ? 'https://third-south-capital.github.io/pixelprep/'
+      : window.location.origin;
+
+    console.log('🔍 [SUPABASE AUTH] Redirect URL:', redirectUrl);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: redirectUrl
       }
     });
 
