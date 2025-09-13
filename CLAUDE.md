@@ -3,8 +3,11 @@
 <!-- 
 User Context: ../CONTEXT.md
 Last Updated: 2025-09-12
-Phase 1: COMPLETED ✅
+Status: PRODUCTION LIVE ✅ v1.0.0
+Phase 1: COMPLETED ✅ (5 presets, 60+ tests)
 Phase 2: COMPLETED ✅ (Database integration validated 100%)
+Phase 3: COMPLETED ✅ (Frontend deployed & live)
+Current: Live production system serving users
 -->
 
 This file provides guidance to Claude Code when working with PixelPrep.
@@ -16,16 +19,28 @@ PixelPrep is a freemium image optimization tool for artists who need to resize/o
 **Business Model**: Free for 1-2 images, then SSO login required for unlimited use
 **Hidden Goal**: Build artist email list + collect artwork samples for AI analysis
 
+## 🚀 Production Deployment (LIVE)
+- **Live Frontend**: https://third-south-capital.github.io/pixelprep/
+- **Backend API**: https://pixelprep.onrender.com/
+- **Status**: Production Live v1.0.0 - Serving Users
+- **Last Updated**: 2025-09-12
+- **Health Check**: Backend /health, Frontend responsive UI
+- **User Flow**: Anonymous upload → optimize → download (working)
+- **Auth Flow**: GitHub OAuth → JWT → persistent gallery (implemented)
+
 ## Technical Architecture
 
-### Tech Stack (Free Tier Focus)
-- **Backend**: Python 3.11, FastAPI, Pillow (PIL)
-- **Dependencies**: Managed with `uv` (not pip)
+### Tech Stack (Production Ready)
+- **Backend**: Python 3.11, FastAPI, Pillow (PIL) 
+- **Frontend**: React 19, TypeScript, TailwindCSS v3, Vite
+- **Dependencies**: `uv` (backend), `npm` (frontend)
 - **Testing**: `pytest` with colocated tests (`file--test.py`)
-- **Linting**: `ruff` (handles both linting and formatting)
+- **Linting**: `ruff` (backend), `eslint` (frontend)
 - **Build**: `justfile` with required commands
-- **Hosting**: Render.com free tier (Phase 1)
-- **Future**: Supabase (auth/db), Vercel (frontend)
+- **Hosting**: 
+  - Backend: Render.com (https://pixelprep.onrender.com/)
+  - Frontend: GitHub Pages (https://third-south-capital.github.io/pixelprep/)
+- **Ready**: Supabase (auth/db integration implemented but not enabled)
 
 ### Directory Structure
 ```
@@ -199,25 +214,28 @@ just dev        # Start uvicorn dev server on :8000
 - **Authenticated Users**: Persistent Supabase storage + image gallery
 - **Seamless Transition**: Same API, different storage backends
 
-### ✅ Working API Endpoints
+### ✅ Working API Endpoints (Production Live)
 ```
-# Anonymous Access
-POST /optimize                    # Upload & optimize images
-GET  /presets                    # Available presets
-GET  /optimize/processors        # Processor configurations
-GET  /health                     # API health
+# Core Processing (Anonymous + Authenticated)
+POST /optimize/                    # Upload & optimize images (ZIP response)
+GET  /optimize/processors          # Processor configurations
+GET  /health                       # API health check
 
-# Authentication
-GET  /auth/github/login          # Initiate OAuth
-GET  /auth/github/callback       # OAuth callback
-GET  /auth/me                    # Current user info
-POST /auth/logout                # Logout
-GET  /auth/health                # Auth system health
+# Authentication Flow
+GET  /auth/github/login            # Initiate GitHub OAuth
+GET  /auth/github/callback         # OAuth callback handler
+GET  /auth/me                      # Current user profile
+POST /auth/logout                  # Logout user
+GET  /auth/health                  # Auth system health
 
-# Authenticated Users Only
-GET  /optimize/images                           # User's image gallery
-GET  /optimize/images/{id}/optimizations        # Image processing history
-DELETE /optimize/images/{id}                    # Delete image
+# Authenticated User Features
+GET  /optimize/images              # User's image gallery with pagination
+GET  /optimize/images/{id}/optimizations  # Image processing history
+DELETE /optimize/images/{id}       # Delete image and optimizations
+GET  /optimize/usage               # Storage usage statistics
+
+# Frontend Integration
+CORS configured for: localhost:3000, localhost:5173, GitHub Pages
 ```
 
 ### Phase 2 Achievements

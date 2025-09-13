@@ -1,6 +1,17 @@
-# PixelPrep 🎨
+# PixelPrep - Professional Image Optimization for Artists
 
-AI-powered image optimization tool for artists. Resize and optimize artwork for Instagram, jury submissions, websites, and more.
+[![Production Status](https://img.shields.io/badge/status-production-success)](https://third-south-capital.github.io/pixelprep/)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Third-South-Capital/pixelprep/releases/tag/v1.0.0)
+[![Backend API](https://img.shields.io/badge/API-live-success)](https://pixelprep.onrender.com/health)
+
+> **🎨 Transform your artwork for any platform with professional optimization presets designed specifically for artists.**
+
+**PixelPrep** is a production-ready freemium image optimization service with both anonymous and authenticated modes. Upload artwork, select a preset, and download optimized versions instantly - perfect for Instagram, jury submissions, web galleries, and more.
+
+## 🚀 Live Application
+
+**🌐 Frontend**: [https://third-south-capital.github.io/pixelprep/](https://third-south-capital.github.io/pixelprep/)  
+**🔧 Backend API**: [https://pixelprep.onrender.com/](https://pixelprep.onrender.com/)
 
 ## Features
 
@@ -84,22 +95,29 @@ just check-env   # Verify environment configuration
 ## Architecture
 
 ### Tech Stack
-- **Backend**: Python 3.11, FastAPI, Pillow (PIL)
-- **Database**: Supabase (PostgreSQL)
-- **Storage**: Supabase Storage
-- **Auth**: GitHub OAuth + JWT
-- **Testing**: pytest
-- **Tooling**: uv, ruff, justfile
+- **Backend**: Python 3.11, FastAPI, Pillow (PIL), uvicorn
+- **Frontend**: React 19, TypeScript, TailwindCSS v3, Vite
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Storage**: Supabase Storage + Memory-based temporary storage
+- **Auth**: GitHub OAuth + JWT tokens (HS256, 30-min expiry)
+- **Testing**: pytest (60+ tests), colocated test files
+- **Tooling**: uv, ruff, eslint, justfile
+- **Deployment**: Render.com (backend), GitHub Pages (frontend)
 
 ### Project Structure
 ```
 pixelprep/
 ├── backend/src/
-│   ├── api/          # FastAPI endpoints
-│   ├── processors/   # Image optimization logic
-│   └── storage/      # Database and file storage
+│   ├── api/          # FastAPI endpoints (auth, optimize, main)
+│   ├── processors/   # Image optimization logic (5 presets)
+│   └── storage/      # Database and file storage (dual-mode)
+├── frontend/src/
+│   ├── components/   # React components
+│   ├── services/     # API integration
+│   └── types/        # TypeScript definitions
 ├── scripts/          # Utility scripts
-└── docs/             # Documentation
+├── .github/          # CI/CD workflows
+└── docs/             # Documentation (CLAUDE.md, PHASE2_SETUP.md)
 ```
 
 ## Setup Requirements
@@ -117,12 +135,13 @@ See [PHASE2_SETUP.md](./PHASE2_SETUP.md) for detailed setup instructions.
 
 ## Testing
 
-Comprehensive test suite with 57+ tests covering:
-- All image processors
-- API endpoints  
-- Authentication flows
-- Storage operations
-- Error handling
+Comprehensive test suite with 60+ tests covering:
+- All 5 image processors with real artwork samples
+- Complete API endpoint coverage (auth, optimize, gallery)
+- Authentication flows (GitHub OAuth, JWT, protected routes)
+- Dual storage operations (anonymous + authenticated)
+- Error handling and edge cases
+- Production validation suite
 
 ```bash
 # Run all tests
@@ -130,6 +149,9 @@ just test
 
 # Test specific component
 uv run pytest backend/src/processors/instagram--test.py -v
+
+# Run production validation
+python phase2_validation.py
 ```
 
 ## Security
@@ -150,17 +172,27 @@ uv run pytest backend/src/processors/instagram--test.py -v
 
 ## Development Status
 
-- ✅ **Phase 1**: Core image optimization (5 presets, 57 tests)
-- ✅ **Phase 2**: Authentication, persistent storage, user management (100% validation)
-- 🚧 **Phase 3**: React frontend, user dashboard
-- 📋 **Phase 4**: Premium features, batch processing
+- ✅ **Phase 1**: Core image optimization (5 presets, 60+ tests) - *COMPLETED*
+- ✅ **Phase 2**: Authentication, persistent storage, user management (100% validation) - *COMPLETED*
+- ✅ **Phase 3**: React frontend, professional UI/UX, production deployment - *COMPLETED*
+- 🚀 **Current**: Live production system with dual-mode operation
+- 📋 **Phase 4**: Premium features, batch processing, analytics
 
-### Phase 2 Validation
-**Database Integration**: ✅ Live Supabase with proper schema  
-**Authentication**: ✅ GitHub OAuth + JWT working  
-**API Coverage**: ✅ 24/24 endpoint tests passing  
-**Storage Modes**: ✅ Anonymous + persistent validated  
-**Production Ready**: ✅ Ready for frontend development
+### Production Ready v1.0.0 ✅
+**🌐 Frontend**: React 19 + TypeScript → GitHub Pages (live)  
+**⚙️ Backend**: FastAPI + Python 3.11 → Render.com (live)  
+**🗄️ Database**: Supabase PostgreSQL with RLS (configured)  
+**🔐 Authentication**: GitHub OAuth + JWT (fully functional)  
+**🎨 UI/UX**: Professional TailwindCSS interface (polished)  
+**📊 Status**: **LIVE and serving users** at https://third-south-capital.github.io/pixelprep/
+
+### Key Features in Production
+- **Anonymous Processing**: Instant upload → optimize → download
+- **Authenticated Users**: Persistent gallery + optimization history 
+- **5 Professional Presets**: Instagram, Jury, Web, Email, Compression
+- **Dual Storage Architecture**: Memory-based + Supabase persistence
+- **GitHub OAuth**: Secure authentication with JWT tokens
+- **CORS Configured**: Production + development domains
 
 ## Contributing
 
