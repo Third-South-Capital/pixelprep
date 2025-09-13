@@ -1,4 +1,4 @@
-import type { ImageAnalysis, PresetRecommendation, PresetName } from '../types';
+import type { ImageAnalysis, PresetRecommendation } from '../types';
 
 /**
  * Analyze image dimensions and characteristics
@@ -44,7 +44,7 @@ export function getImageDimensions(file: File): Promise<{ width: number; height:
  * Smart preset recommendation based on image analysis
  */
 export function recommendPreset(analysis: ImageAnalysis): PresetRecommendation {
-  const { width, height, aspectRatio, isSquare, isPortrait, isLandscape, isLarge, isSmall } = analysis;
+  const { aspectRatio, isSquare, isPortrait, isLandscape, isLarge, isSmall } = analysis;
 
   // Instagram Square (1:1 ratio, social media optimized)
   if (isSquare) {
