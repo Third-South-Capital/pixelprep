@@ -6,6 +6,8 @@ interface ResultsDisplayProps {
   originalFile: File;
   originalImageUrl?: string;
   optimizedImageUrl?: string;
+  optimizedBlob?: Blob;
+  isZip?: boolean;
   onReset: () => void;
 }
 
@@ -43,7 +45,33 @@ function AnimatedCounter({ from, to, duration = 2000 }: CounterAnimationProps) {
   return <span>{count}%</span>;
 }
 
-export function ResultsDisplay({ result, originalFile, originalImageUrl, optimizedImageUrl, onReset }: ResultsDisplayProps) {
+function DownloadButton({ blob, filename, isZip }: { blob: Blob; filename: string; isZip?: boolean }) {
+  const handleDownload = () => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <button
+      onClick={handleDownload}
+      className="group bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-3 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
+    >
+      <svg className="w-5 h-5 mr-2 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Download {isZip ? 'ZIP' : 'Image'}
+    </button>
+  );
+
+}
+
+export function ResultsDisplay({ result, originalFile, originalImageUrl, optimizedImageUrl, optimizedBlob, isZip, onReset }: ResultsDisplayProps) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -299,6 +327,16 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+        {optimizedBlob && (
+          <DownloadButton 
+            blob={optimizedBlob}
+            filename={isZip 
+              ? `optimized_${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.zip`
+              : `${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.${result.metadata.format.toLowerCase()}`
+            }
+            isZip={isZip}
+          />
+        )}
         <button
           onClick={onReset}
           className="group bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
@@ -310,9 +348,9 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
         </button>
         <button
           onClick={() => window.location.reload()}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center"
+          className="group bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           Start Fresh

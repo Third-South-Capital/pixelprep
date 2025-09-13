@@ -54,7 +54,20 @@ class ApiService {
   private createMetadataFromHeaders(response: Response, originalFile: File, preset: PresetName): OptimizationResult {
     const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
     const dimensions = response.headers.get('X-Dimensions') || this.getPresetDimensions(preset);
-    const fileSize = parseInt(response.headers.get('X-File-Size') || '0') || response.headers.get('content-length') ? parseInt(response.headers.get('content-length')!) : 0;
+    
+    // Try multiple headers to get file size
+    let fileSize = 0;
+    const xFileSize = response.headers.get('X-File-Size');
+    const contentLength = response.headers.get('content-length');
+    
+    if (xFileSize && !isNaN(parseInt(xFileSize))) {
+      fileSize = parseInt(xFileSize);
+    } else if (contentLength && !isNaN(parseInt(contentLength))) {
+      fileSize = parseInt(contentLength);
+    } else {
+      // Fallback: estimate based on original file size and preset
+      fileSize = Math.round(originalFile.size * this.getCompressionRatio(preset));
+    }
     
     return {
       preset,
@@ -130,6 +143,18 @@ class ApiService {
       'quick_compress': 'Reduced file size while maintaining dimensions'
     };
     return descriptions[preset] || 'Image optimized successfully';
+  }
+
+  private getCompressionRatio(preset: PresetName): number {
+    // Conservative estimates for compression ratios by preset
+    const ratios = {
+      'instagram_square': 0.3,      // Aggressive compression for social media
+      'jury_submission': 0.6,       // High quality, moderate compression
+      'web_display': 0.4,           // Balanced for web performance
+      'email_newsletter': 0.2,      // Maximum compression for email
+      'quick_compress': 0.7         // Light compression maintaining quality
+    };
+    return ratios[preset] || 0.5;
   }
 
   validateFile(file: File): { isValid: boolean; error?: string } {

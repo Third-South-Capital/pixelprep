@@ -59,4 +59,6 @@ export interface UploadState {
   includeMetadata: boolean;
   originalImageUrl?: string;
   optimizedImageUrl?: string;
+  optimizedBlob?: Blob;
+  isZip?: boolean;
 }

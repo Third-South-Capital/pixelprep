@@ -14,7 +14,7 @@ function App() {
     isUploading: false,
     result: null,
     error: null,
-    includeMetadata: true,
+    includeMetadata: false,
   });
 
   useEffect(() => {
@@ -90,7 +90,9 @@ function App() {
         ...prev, 
         isUploading: false, 
         result: metadata,
-        optimizedImageUrl
+        optimizedImageUrl,
+        optimizedBlob: blob,
+        isZip
       }));
     } catch (error) {
       setUploadState(prev => ({ 
@@ -161,6 +163,8 @@ function App() {
               originalFile={uploadState.file!}
               originalImageUrl={uploadState.originalImageUrl}
               optimizedImageUrl={uploadState.optimizedImageUrl}
+              optimizedBlob={uploadState.optimizedBlob}
+              isZip={uploadState.isZip}
               onReset={resetUpload}
             />
           ) : (
