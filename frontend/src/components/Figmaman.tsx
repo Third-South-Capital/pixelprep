@@ -113,7 +113,7 @@ export function Figmaman() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">✅ Current Features</h3>
+                    <h3 className="text-xl font-bold text-gray-900">✅ Current Features & Recent Updates</h3>
                   </div>
                   <div className="ml-11 space-y-3">
                     <div className="flex items-start space-x-3">
@@ -121,6 +121,13 @@ export function Figmaman() {
                       <div>
                         <p className="font-semibold text-gray-800">5 Professional Optimization Presets</p>
                         <p className="text-sm text-gray-600">Instagram Square, Jury Submission, Web Display, Email Newsletter, Quick Compress</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Bug Fixes & UI Refresh</p>
+                        <p className="text-sm text-gray-600">Cleaner interface, improved performance, better user experience</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -148,34 +155,41 @@ export function Figmaman() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">🚀 Coming Soon</h3>
+                    <h3 className="text-xl font-bold text-gray-900">🚀 Coming Soon - Core Platform</h3>
                   </div>
                   <div className="ml-11 space-y-3">
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                       <div>
                         <p className="font-semibold text-gray-800">User Accounts & Image Galleries</p>
-                        <p className="text-sm text-gray-600">Save your work, track optimization history</p>
+                        <p className="text-sm text-gray-600">Save your work, track optimization history, build portfolio</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                       <div>
                         <p className="font-semibold text-gray-800">Batch Processing</p>
-                        <p className="text-sm text-gray-600">Upload multiple images, optimize them all at once</p>
+                        <p className="text-sm text-gray-600">Upload multiple images, optimize them all simultaneously</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="font-semibold text-gray-800">Enhanced Metadata Options</p>
-                        <p className="text-sm text-gray-600">EXIF preservation, custom watermarking</p>
+                        <p className="font-semibold text-gray-800">Custom Preset Builder</p>
+                        <p className="text-sm text-gray-600">Create and save your own optimization rules and templates</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Cloud Storage Integration</p>
+                        <p className="text-sm text-gray-600">Sync with Google Drive, Dropbox for seamless portfolio management</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Future Enhancements */}
+                {/* AI-Powered Content Generation */}
                 <div>
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -183,28 +197,98 @@ export function Figmaman() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">🔮 Future Vision</h3>
+                    <h3 className="text-xl font-bold text-gray-900">🤖 AI-Powered Content Generation</h3>
                   </div>
                   <div className="ml-11 space-y-3">
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="font-semibold text-gray-800">AI-Powered Art Analysis</p>
-                        <p className="text-sm text-gray-600">Intelligent suggestions for optimal settings based on artwork type</p>
+                        <p className="font-semibold text-gray-800">Art Description Generator</p>
+                        <p className="text-sm text-gray-600">Automatic captions for Instagram, artist statements, grant applications</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="font-semibold text-gray-800">Custom Preset Builder</p>
-                        <p className="text-sm text-gray-600">Create and save your own optimization templates</p>
+                        <p className="font-semibold text-gray-800">Smart Titles & File Naming</p>
+                        <p className="text-sm text-gray-600">Generate descriptive filenames instead of "IMG_4527.jpg"</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
                       <div>
-                        <p className="font-semibold text-gray-800">API Access for Developers</p>
-                        <p className="text-sm text-gray-600">Integrate PixelPrep into your own applications</p>
+                        <p className="font-semibold text-gray-800">Auto-Generated Artist Statements</p>
+                        <p className="text-sm text-gray-600">Help artists write compelling descriptions of their work</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Smart Analysis & Intelligence */}
+                <div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">🧠 Smart Analysis & Intelligence</h3>
+                  </div>
+                  <div className="ml-11 space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Style Classification & Tagging</p>
+                        <p className="text-sm text-gray-600">Automatically categorize medium, style, subject matter for artist segmentation</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Smart Cropping Intelligence</p>
+                        <p className="text-sm text-gray-600">AI-powered subject detection instead of center crop</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Color Palette Extraction</p>
+                        <p className="text-sm text-gray-600">Generate hex codes, Pantone matches, marketing copy from artwork</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Integration */}
+                <div>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">🏆 Professional Integration</h3>
+                  </div>
+                  <div className="ml-11 space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Grant/Competition Matching</p>
+                        <p className="text-sm text-gray-600">Search EntryThingy database to recommend applicable opportunities based on artwork analysis</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">EntryThingy Platform Integration</p>
+                        <p className="text-sm text-gray-600">Unified artist accounts and streamlined submission workflows</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Export to Platforms</p>
+                        <p className="text-sm text-gray-600">Direct publishing to Instagram, portfolio sites, and professional platforms</p>
                       </div>
                     </div>
                   </div>
