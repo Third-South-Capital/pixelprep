@@ -1,3 +1,122 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Font imports */
+@font-face {
+  font-family: Outfit;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/outfit/v11/QGYsz_wNahGAdqQ43Rh_c6Dpp_k.woff2') format("woff2");
+  unicode-range: u+0100-02ba,u+02bd-02c5,u+02c7-02cc,u+02ce-02d7,u+02dd-02ff,u+0304,u+0308,u+0329,u+1d00-1dbf,u+1e00-1e9f,u+1ef2-1eff,u+2020,u+20a0-20ab,u+20ad-20c0,u+2113,u+2c60-2c7f,u+a720-a7ff;
+}
+
+@font-face {
+  font-family: Outfit;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/outfit/v11/QGYsz_wNahGAdqQ43Rh_c6Dp.woff2') format("woff2");
+  unicode-range: u+00??,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0304,u+0308,u+0329,u+2000-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd;
+}
+
+/* CSS Variables for theming */
+@layer base {
+  :root {
+    --font-family-sans: Outfit, sans-serif;
+
+    /* Light mode colors (default) */
+    --color-bg-primary: theme(colors.white);
+    --color-bg-secondary: theme(colors.gray.50);
+    --color-bg-tertiary: theme(colors.gray.100);
+    --color-bg-inverse: theme(colors.gray.900);
+
+    --color-text-primary: theme(colors.gray.900);
+    --color-text-secondary: theme(colors.gray.600);
+    --color-text-tertiary: theme(colors.gray.500);
+    --color-text-inverse: theme(colors.white);
+
+    --color-border-primary: theme(colors.gray.200);
+    --color-border-secondary: theme(colors.gray.100);
+
+    --color-accent-primary: theme(colors.blue.500);
+    --color-accent-primary-hover: theme(colors.blue.600);
+    --color-accent-secondary: theme(colors.green.600);
+    --color-accent-purple: theme(colors.purple.800);
+    --color-accent-purple-hover: theme(colors.purple.900);
+
+    --color-code-bg: #f8f8f8;
+    --color-code-block-bg: rgb(17 24 39);
+  }
+
+  /* Dark mode overrides */
+  :root.dark {
+    --color-bg-primary: theme(colors.gray.900);
+    --color-bg-secondary: theme(colors.gray.800);
+    --color-bg-tertiary: theme(colors.gray.700);
+    --color-bg-inverse: theme(colors.white);
+
+    --color-text-primary: theme(colors.gray.100);
+    --color-text-secondary: theme(colors.gray.300);
+    --color-text-tertiary: theme(colors.gray.400);
+    --color-text-inverse: theme(colors.gray.900);
+
+    --color-border-primary: theme(colors.gray.700);
+    --color-border-secondary: theme(colors.gray.800);
+
+    --color-accent-primary: theme(colors.blue.400);
+    --color-accent-primary-hover: theme(colors.blue.300);
+    --color-accent-secondary: theme(colors.green.400);
+    --color-accent-purple: theme(colors.purple.600);
+    --color-accent-purple-hover: theme(colors.purple.500);
+
+    --color-code-bg: theme(colors.gray.800);
+    --color-code-block-bg: rgb(17 24 39);
+  }
+
+  /* Base styles */
+  body {
+    font-family: var(--font-family-sans);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Dark mode utility classes */
+@layer utilities {
+  .bg-primary { background-color: var(--color-bg-primary); }
+  .bg-secondary { background-color: var(--color-bg-secondary); }
+  .bg-tertiary { background-color: var(--color-bg-tertiary); }
+  .bg-inverse { background-color: var(--color-bg-inverse); }
+
+  .text-primary { color: var(--color-text-primary); }
+  .text-secondary { color: var(--color-text-secondary); }
+  .text-tertiary { color: var(--color-text-tertiary); }
+  .text-inverse { color: var(--color-text-inverse); }
+
+  .border-primary { border-color: var(--color-border-primary); }
+  .border-secondary { border-color: var(--color-border-secondary); }
+
+  .accent-primary { color: var(--color-accent-primary); }
+  .accent-primary-bg { background-color: var(--color-accent-primary); }
+  .accent-primary-hover:hover { background-color: var(--color-accent-primary-hover); }
+  .accent-secondary { color: var(--color-accent-secondary); }
+  .accent-secondary-bg { background-color: var(--color-accent-secondary); }
+  .accent-purple-bg { background-color: var(--color-accent-purple); }
+  .accent-purple-hover:hover { background-color: var(--color-accent-purple-hover); }
+}

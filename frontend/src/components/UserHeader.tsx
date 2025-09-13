@@ -30,22 +30,22 @@ export function UserHeader({ user, onLogout }: UserHeaderProps) {
     <div className="relative">
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg hover:shadow-xl border border-purple-100 transition-all duration-200 hover:bg-white"
+        className="flex items-center gap-3 bg-primary rounded-xl px-4 py-2 shadow-lg hover:shadow-xl border border-primary transition-all duration-200 hover:bg-secondary"
       >
         <img
           src={avatarUrl}
           alt={displayName}
-          className="w-8 h-8 rounded-full border-2 border-purple-200"
+          className="w-8 h-8 rounded-full border-2 border-primary"
           onError={(e) => {
-            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=7c3aed&color=fff&size=32`;
+            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3b82f6&color=fff&size=32`;
           }}
         />
         <div className="text-left hidden sm:block">
-          <div className="text-sm font-semibold text-gray-800">{displayName}</div>
-          <div className="text-xs text-purple-600">Pro User</div>
+          <div className="text-sm font-semibold text-primary">{displayName}</div>
+          <div className="text-xs accent-primary">Pro User</div>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-tertiary transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -55,28 +55,28 @@ export function UserHeader({ user, onLogout }: UserHeaderProps) {
       </button>
 
       {isDropdownOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-purple-100 z-50 overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
+        <div className="absolute right-0 mt-2 w-64 bg-primary rounded-xl shadow-2xl border border-primary z-50 overflow-hidden">
+          <div className="p-4 border-b border-secondary">
             <div className="flex items-center gap-3">
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="w-10 h-10 rounded-full border-2 border-purple-200"
+                className="w-10 h-10 rounded-full border-2 border-primary"
                 onError={(e) => {
-                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=7c3aed&color=fff&size=40`;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=3b82f6&color=fff&size=40`;
                 }}
               />
               <div>
-                <div className="font-semibold text-gray-800">{displayName}</div>
-                <div className="text-sm text-gray-500">{user.email}</div>
+                <div className="font-semibold text-primary">{displayName}</div>
+                <div className="text-sm text-secondary">{user.email}</div>
               </div>
             </div>
           </div>
 
           <div className="p-2">
-            <div className="px-3 py-2 text-sm text-gray-600 bg-green-50 rounded-lg mb-2">
+            <div className="px-3 py-2 text-sm text-secondary bg-secondary rounded-lg mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 accent-secondary-bg rounded-full"></div>
                 <span className="font-medium">Unlimited optimizations</span>
               </div>
             </div>

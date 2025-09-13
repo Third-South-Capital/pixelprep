@@ -202,12 +202,48 @@ class AuthService {
     // Get the current session synchronously from Supabase's internal cache
     // This is safe to call synchronously after auth state has been established
     try {
-      // Check localStorage directly for session (Supabase stores session here)
-      const storedSession = localStorage.getItem('sb-zhxhuzcbsvumopxnhfxm-auth-token');
-      if (storedSession) {
-        const parsed = JSON.parse(storedSession);
-        if (parsed.user) {
-          return this.convertSupabaseUser(parsed.user);
+      // Use Supabase's internal client state instead of manually accessing localStorage
+      // This is more reliable and handles the correct key format
+      const session = supabase.auth.getSession();
+
+      // Since getSession() is async but we need sync access, we'll check multiple possible localStorage keys
+      const possibleKeys = [
+        'sb-zhxhuzcbsvumopxnhfxm-auth-token',
+        `sb-zhxhuzcbsvumopxnhfxm-auth-token`, // Current format attempt
+        'supabase.auth.token', // Alternative format
+        'sb-' + 'zhxhuzcbsvumopxnhfxm' + '-auth-token' // Explicit construction
+      ];
+
+      for (const key of possibleKeys) {
+        try {
+          const storedSession = localStorage.getItem(key);
+          if (storedSession) {
+            const parsed = JSON.parse(storedSession);
+            if (parsed.user) {
+              return this.convertSupabaseUser(parsed.user);
+            }
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      // As a fallback, also check for any key containing the project ID
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes('zhxhuzcbsvumopxnhfxm') && key.includes('auth')) {
+          try {
+            const storedSession = localStorage.getItem(key);
+            if (storedSession) {
+              const parsed = JSON.parse(storedSession);
+              if (parsed.user) {
+                console.log('🔍 [AUTH] Found session in localStorage key:', key);
+                return this.convertSupabaseUser(parsed.user);
+              }
+            }
+          } catch {
+            continue;
+          }
         }
       }
     } catch {
