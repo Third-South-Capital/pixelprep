@@ -204,6 +204,16 @@ def verify_optional_supabase_token(
     if credentials is None:
         return None
 
+    # If auth is disabled (no Supabase secrets), skip verification
+    if not AUTH_ENABLED:
+        print("🔍 [SUPABASE JWT OPTIONAL] Auth disabled, skipping token verification")
+        return None
+
+    # If no JWT secret configured, can't verify tokens
+    if not SUPABASE_JWT_SECRET:
+        print("🔍 [SUPABASE JWT OPTIONAL] No JWT secret configured, skipping verification")
+        return None
+
     try:
         # Decode Supabase JWT token
         payload = jwt.decode(
