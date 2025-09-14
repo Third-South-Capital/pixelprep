@@ -10,6 +10,11 @@ interface PresetSelectorProps {
 }
 
 export function PresetSelector({ processors, selectedPreset, onPresetSelect, recommendation, imageAnalysis }: PresetSelectorProps) {
+  // DEBUG: Log processors object to understand what's being received
+  console.log('🔍 [PresetSelector] Processors object:', processors);
+  console.log('🔍 [PresetSelector] Custom presets enabled:', processors?.custom_presets_enabled);
+  console.log('🔍 [PresetSelector] Full processors keys:', processors ? Object.keys(processors) : 'processors is null/undefined');
+
   const basePresets: { key: PresetName; icon: string }[] = [
     { key: 'instagram_square', icon: '📸' },
     { key: 'jury_submission', icon: '🏆' },
@@ -20,9 +25,14 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
 
   // Add custom preset if enabled
   const presets: { key: PresetName; icon: string }[] = [...basePresets];
+  console.log('🔍 [PresetSelector] Checking custom presets condition:', processors.custom_presets_enabled);
   if (processors.custom_presets_enabled) {
+    console.log('🔍 [PresetSelector] Adding custom preset to list');
     presets.push({ key: 'custom', icon: '⚙️' });
+  } else {
+    console.log('🔍 [PresetSelector] NOT adding custom preset - condition failed');
   }
+  console.log('🔍 [PresetSelector] Final presets array:', presets.map(p => p.key));
 
   return (
     <div className="space-y-8">

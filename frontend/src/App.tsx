@@ -87,8 +87,15 @@ function App() {
         }
 
         // Load processors
-        const processorsData = await apiService.getProcessors();
-        setProcessors(processorsData);
+        console.log('🔍 [APP] Loading processors from API...');
+        try {
+          const processorsData = await apiService.getProcessors();
+          console.log('🔍 [APP] Processors loaded successfully:', processorsData);
+          console.log('🔍 [APP] Custom presets enabled in response:', processorsData?.custom_presets_enabled);
+          setProcessors(processorsData);
+        } catch (error) {
+          console.error('🚨 [APP] Failed to load processors:', error);
+        }
 
         // Set up Supabase auth state listener (only if auth is enabled)
         if (authConfig.auth_enabled) {
