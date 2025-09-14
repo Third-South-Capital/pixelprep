@@ -203,7 +203,13 @@ function App() {
   const handlePresetSelect = (preset: PresetName, shouldAutoProcess: boolean = false) => {
     console.log('🎯 [PRESET SELECT] Called with:', { preset, shouldAutoProcess });
 
-    setUploadState(prev => ({ ...prev, preset, error: null }));
+    setUploadState(prev => ({
+      ...prev,
+      preset,
+      error: null,
+      // Switch to custom mode when custom preset is selected
+      optimizationMode: preset === 'custom' ? 'custom' : 'presets'
+    }));
 
     // Clear any existing auto-processing timer
     if (autoProcessTimer) {
@@ -226,7 +232,8 @@ function App() {
       const { blob, metadata, isZip, originalFileSize } = await apiService.optimizeImage(
         uploadState.file,
         uploadState.preset,
-        uploadState.includeMetadata
+        uploadState.includeMetadata,
+        uploadState.customOptimization
       );
 
       // Create preview URL for optimized image (only for non-ZIP)
