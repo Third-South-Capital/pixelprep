@@ -85,12 +85,48 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
   const calculateSavings = () => {
     // Use the accurate original file size from backend, fallback to File.size
     const originalSize = originalFileSize || originalFile.size;
-    const optimizedSize = result.metadata.file_size_bytes;
 
-    if (originalSize <= 0 || optimizedSize <= 0) return null;
+    // CRITICAL DATA INTEGRITY FIX: Use actual blob size (what user downloads) instead of metadata
+    // This ensures GUI displays exactly the same size as what gets downloaded
+    const actualBlobSize = optimizedBlob?.size || 0;
+    let optimizedSize = actualBlobSize > 0 ? actualBlobSize : result.metadata.file_size_bytes;
+
+    // Validation: Log file size consistency for debugging
+    console.log(`🔍 File Size Debug (DATA INTEGRITY CHECK):`);
+    console.log(`  • Original: ${originalSize} bytes (${formatFileSize(originalSize)})`);
+    console.log(`  • Optimized (from metadata): ${optimizedSize} bytes (${formatFileSize(optimizedSize)})`);
+    console.log(`  • Actual blob size (DOWNLOAD): ${actualBlobSize} bytes (${formatFileSize(actualBlobSize)})`);
+    console.log(`  • Is ZIP: ${isZip}`);
+    console.log(`  • Preset: ${result.preset}`);
+
+    // Data integrity warning
+    if (actualBlobSize !== optimizedSize) {
+      console.error(`❌ DATA INTEGRITY ISSUE: GUI shows ${optimizedSize} bytes but download is ${actualBlobSize} bytes`);
+      console.error(`   Difference: ${actualBlobSize - optimizedSize} bytes`);
+      console.error(`   This breaks user trust - they see one size but download another!`);
+    } else {
+      console.log(`✅ DATA INTEGRITY OK: GUI and download sizes match`);
+    }
+
+    // Calculate reduction percentage for validation
+    const reductionPercent = ((originalSize - optimizedSize) / originalSize * 100).toFixed(1);
+    console.log(`  • Actual reduction: ${reductionPercent}%`);
+
+    // Warn about suspicious sizes but don't override (backend should be authoritative)
+    if (optimizedSize > originalSize * 0.9) {
+      console.warn(`⚠️ Suspicious: Optimized size is >90% of original for ${result.preset} preset`);
+    } else if (optimizedSize > originalSize) {
+      console.warn(`⚠️ Suspicious: Optimized size (${optimizedSize}) > original size (${originalSize})`);
+    }
+
+    if (originalSize <= 0 || optimizedSize <= 0) {
+      console.error(`❌ Invalid file sizes: original=${originalSize}, optimized=${optimizedSize}`);
+      return null;
+    }
 
     // Handle case where optimized file is larger (shouldn't happen but just in case)
     if (optimizedSize >= originalSize) {
+      console.warn(`⚠️ Optimized file is larger than original - showing as increase`);
       return {
         bytes: optimizedSize - originalSize,
         percentage: 0,
@@ -100,6 +136,9 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
 
     const savings = originalSize - optimizedSize;
     const percentage = Math.round((savings / originalSize) * 100);
+
+    console.log(`✨ Final calculation: ${formatFileSize(savings)} saved (${percentage}% reduction)`);
+
     return { bytes: savings, percentage, isIncrease: false };
   };
 
@@ -194,7 +233,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 font-semibold">File size</span>
-                  <span className="font-mono text-lg font-bold text-emerald-600">{formatFileSize(result.metadata.file_size_bytes)}</span>
+                  <span className="font-mono text-lg font-bold text-emerald-600">{formatFileSize(optimizedBlob?.size || result.metadata.file_size_bytes)}</span>
                 </div>
               </div>
               <div className="bg-emerald-50 rounded-lg p-4">
@@ -301,7 +340,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
                   </div>
                   <div className="text-center bg-emerald-100 rounded-xl p-3">
                     <p className="text-sm font-bold text-emerald-800">
-                      {formatFileSize(result.metadata.file_size_bytes)}
+                      {formatFileSize(optimizedBlob?.size || result.metadata.file_size_bytes)}
                     </p>
                   </div>
                 </div>

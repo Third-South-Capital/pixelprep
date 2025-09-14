@@ -123,17 +123,22 @@ class ApiService {
     const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
     const dimensions = response.headers.get('X-Dimensions') || this.getPresetDimensions(preset);
 
-    // Try multiple headers to get file size
+    // CRITICAL: Get the actual optimized image size from headers
+    // This MUST match the size from processor.save_optimized() exactly
     let fileSize = 0;
     const xFileSize = response.headers.get('X-File-Size');
     const contentLength = response.headers.get('content-length');
 
     if (xFileSize && !isNaN(parseInt(xFileSize))) {
+      // Use backend-reported file size (from actual compression)
       fileSize = parseInt(xFileSize);
     } else if (contentLength && !isNaN(parseInt(contentLength))) {
+      // Content-Length is the download size, not the image size
+      console.warn('⚠️ Using Content-Length instead of X-File-Size - may cause inconsistency');
       fileSize = parseInt(contentLength);
     } else {
-      // Fallback: estimate based on original file size and preset
+      // This should never happen - backend should always provide X-File-Size
+      console.error('❌ Backend did not provide file size headers - file size will be inconsistent');
       const baseSize = originalFileSize || originalFile.size;
       fileSize = Math.round(baseSize * this.getCompressionRatio(preset));
     }
@@ -168,14 +173,17 @@ class ApiService {
     const originalFilename = response.headers.get('X-Original-Filename') || originalFile.name;
     const dimensions = response.headers.get('X-Dimensions') || this.getPresetDimensions(preset);
     
-    // Get the actual optimized image size from headers
+    // CRITICAL: Get the actual optimized image size from headers
+    // This MUST match the size from processor.save_optimized() exactly
     let optimizedSize = 0;
     const xFileSize = response.headers.get('X-File-Size');
-    
+
     if (xFileSize && !isNaN(parseInt(xFileSize))) {
+      // Use backend-reported file size (from actual compression)
       optimizedSize = parseInt(xFileSize);
     } else {
-      // Fallback: estimate based on original file size and preset
+      // This should never happen - backend should always provide X-File-Size
+      console.error('❌ Backend did not provide X-File-Size header - file size will be inconsistent');
       const baseSize = originalFileSize || originalFile.size;
       optimizedSize = Math.round(baseSize * this.getCompressionRatio(preset));
     }

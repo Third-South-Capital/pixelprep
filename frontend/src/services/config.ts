@@ -10,6 +10,7 @@ interface AuthHealthResponse {
   github_oauth: boolean;
   jwt_configured: boolean;
   supabase_connected: boolean;
+  custom_presets_enabled?: boolean;
 }
 
 class ConfigService {
@@ -33,7 +34,8 @@ class ConfigService {
           mode: 'anonymous_optional',
           github_oauth: false,
           jwt_configured: false,
-          supabase_connected: false
+          supabase_connected: false,
+          custom_presets_enabled: false
         };
       }
     }
@@ -53,6 +55,11 @@ class ConfigService {
   async getAuthMode(): Promise<string> {
     const config = await this.getAuthConfig();
     return config.mode;
+  }
+
+  async isCustomPresetsEnabled(): Promise<boolean> {
+    const config = await this.getAuthConfig();
+    return config.custom_presets_enabled || false;
   }
 
   // Clear cache when needed (e.g., during development)

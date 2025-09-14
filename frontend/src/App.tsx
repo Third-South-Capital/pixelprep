@@ -38,6 +38,23 @@ function App() {
   // Auto-processing state
   const [autoProcessTimer, setAutoProcessTimer] = useState<NodeJS.Timeout | null>(null);
 
+  // Global function to cancel auto-processing (called when tour is skipped)
+  const cancelAutoProcessing = () => {
+    if (autoProcessTimer) {
+      clearTimeout(autoProcessTimer);
+      setAutoProcessTimer(null);
+      console.log('🚫 [APP] Auto-processing cancelled (tour skipped)');
+    }
+  };
+
+  // Expose cancelAutoProcessing globally for tour skip
+  useEffect(() => {
+    (window as any).cancelAutoProcessing = cancelAutoProcessing;
+    return () => {
+      delete (window as any).cancelAutoProcessing;
+    };
+  }, [autoProcessTimer]);
+
   // Authentication state
   const [user, setUser] = useState<PixelPrepUser | null>(null);
   const [usageCount, setUsageCount] = useState(0);
@@ -183,21 +200,21 @@ function App() {
   };
 
 
-  const handlePresetSelect = (preset: PresetName) => {
+  const handlePresetSelect = (preset: PresetName, shouldAutoProcess: boolean = false) => {
+    console.log('🎯 [PRESET SELECT] Called with:', { preset, shouldAutoProcess });
+
     setUploadState(prev => ({ ...prev, preset, error: null }));
 
-    // Auto-start processing after a short delay
+    // Clear any existing auto-processing timer
     if (autoProcessTimer) {
       clearTimeout(autoProcessTimer);
+      setAutoProcessTimer(null);
+      console.log('🎯 [PRESET SELECT] Cleared existing auto-process timer');
     }
 
-    const timer = setTimeout(() => {
-      if (uploadState.file && preset && !uploadState.isUploading) {
-        handleUpload();
-      }
-    }, 1500); // 1.5 second delay to allow user to see the selection
-
-    setAutoProcessTimer(timer);
+    // AUTO-PROCESSING DISABLED: Users must explicitly click "Optimize Image" button
+    // This ensures full user control over when image processing starts
+    console.log('🎯 [PRESET SELECT] Auto-processing disabled - user must click optimize button');
   };
 
   const handleUpload = async () => {
@@ -227,6 +244,24 @@ function App() {
         originalFileSize,
         isZip
       }));
+
+      // Auto-scroll to results after state update
+      setTimeout(() => {
+        const resultsElement = document.querySelector('[data-results]');
+        if (resultsElement) {
+          resultsElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest'
+          });
+        } else {
+          // Fallback - scroll to bottom of page
+          window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 300); // Allow time for DOM to update
 
       // Track usage for anonymous users and show login prompt if needed (only if auth is required)
       if (authRequired && authEnabled && !authService.isAuthenticated()) {
@@ -382,7 +417,7 @@ function App() {
 
         <div className="max-w-5xl mx-auto">
           {uploadState.result ? (
-            <>
+            <div data-results>
               {/* Progress Indicator */}
               <ProgressIndicator currentStep="download" />
 
@@ -396,7 +431,7 @@ function App() {
                 isZip={uploadState.isZip}
                 onReset={resetUpload}
               />
-            </>
+            </div>
           ) : (
             <>
               {/* Progress Indicator */}
@@ -476,17 +511,16 @@ function App() {
                         </label>
                       </div>
 
-                      {/* Auto-processing notification */}
+                      {/* Ready to optimize notification */}
                       <div className="text-center">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 px-4 py-2 rounded-2xl text-sm font-medium border border-blue-200">
-                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
-                          <span>Starting optimization automatically...</span>
+                          <span>Ready to optimize your artwork!</span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Or click below to start immediately
+                        <p className="text-xs text-blue-600 mt-2 font-medium">
+                          Click the button below to begin
                         </p>
                       </div>
 
@@ -535,7 +569,7 @@ function App() {
                               <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                               </svg>
-                              {user ? 'Start Now →' : `Start Now → ${usageCount === 0 ? '(Free)' : ''}`}
+                              Optimize Image{!user && usageCount === 0 ? ' (Free)' : ''}
                             </button>
                           </OnboardingTooltip>
                         )}

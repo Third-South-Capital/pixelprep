@@ -10,13 +10,19 @@ interface PresetSelectorProps {
 }
 
 export function PresetSelector({ processors, selectedPreset, onPresetSelect, recommendation, imageAnalysis }: PresetSelectorProps) {
-  const presets: { key: PresetName; icon: string }[] = [
+  const basePresets: { key: PresetName; icon: string }[] = [
     { key: 'instagram_square', icon: '📸' },
     { key: 'jury_submission', icon: '🏆' },
     { key: 'web_display', icon: '🌐' },
     { key: 'email_newsletter', icon: '✉️' },
     { key: 'quick_compress', icon: '⚡' },
   ];
+
+  // Add custom preset if enabled
+  const presets: { key: PresetName; icon: string }[] = [...basePresets];
+  if (processors.custom_presets_enabled && processors.processors.custom) {
+    presets.push({ key: 'custom', icon: '⚙️' });
+  }
 
   return (
     <div className="space-y-8">
@@ -28,7 +34,7 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
       </div>
 
       {/* Smart Recommendation Banner */}
-      {recommendation && imageAnalysis && (
+      {recommendation && imageAnalysis && recommendation.confidence >= 70 && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 mx-4">
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
@@ -41,7 +47,13 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
             <div className="flex-grow">
               <div className="flex items-center space-x-2 mb-2">
                 <h4 className="text-lg font-bold text-blue-900">Smart Recommendation</h4>
-                <div className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+                <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                  recommendation.confidence >= 90
+                    ? 'bg-green-100 text-green-800'
+                    : recommendation.confidence >= 80
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                }`}>
                   {recommendation.confidence}% match
                 </div>
               </div>
@@ -59,18 +71,15 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
               </div>
             </div>
             <div className="flex-shrink-0 text-blue-400">
-              <button
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                onClick={() => {/* Could show more info */}}
-              >
-                Why?
-              </button>
+              <div className="text-xs text-blue-600 font-medium">
+                {recommendation.confidence >= 90 ? '🎯 Perfect' : recommendation.confidence >= 80 ? '👍 Great' : '✨ Good'} match
+              </div>
             </div>
           </div>
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
         {presets.map(({ key, icon }) => {
           const config = processors.processors[key];
           if (!config) return null;
@@ -83,30 +92,41 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
               key={key}
               onClick={() => onPresetSelect(key)}
               className={`
-                group p-6 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-xl h-full min-h-[280px] flex flex-col relative
+                group p-4 lg:p-6 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-xl h-full min-h-[260px] lg:min-h-[280px] flex flex-col relative
                 ${isSelected
                   ? (isRecommended
                       ? 'border-blue-400 bg-blue-50 shadow-xl ring-2 ring-blue-200'
                       : 'border-accent-primary bg-secondary shadow-xl')
                   : (isRecommended
-                      ? 'border-blue-300 bg-blue-25 hover:border-blue-400 hover:bg-blue-50 animate-pulse hover:animate-none'
+                      ? 'border-blue-300 bg-blue-25 hover:border-blue-400 hover:bg-blue-50 shadow-md'
                       : 'border-primary bg-primary hover:border-accent-primary hover:bg-secondary')
                 }
-                ${!selectedPreset && isRecommended ? 'ring-2 ring-blue-300 ring-opacity-50 animate-pulse' : ''}
+                ${!selectedPreset && isRecommended ? 'ring-2 ring-blue-300 ring-opacity-50' : ''}
               `}
             >
               {/* Recommendation Badge with Animation */}
-              {isRecommended && (
+              {isRecommended && recommendation && recommendation.confidence >= 70 && (
                 <div className="absolute -top-2 -right-2 z-10">
                   <div className="relative">
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                    <div className={`text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 ${
+                      recommendation.confidence >= 90
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 animate-pulse'
+                        : recommendation.confidence >= 80
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 animate-pulse'
+                          : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                    }`}>
                       <svg className="w-3 h-3 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                       </svg>
-                      <span>BEST MATCH</span>
+                      <span>{
+                        recommendation.confidence >= 90 ? 'PERFECT' :
+                        recommendation.confidence >= 80 ? 'BEST MATCH' : 'GOOD MATCH'
+                      }</span>
                     </div>
-                    {/* Pulsing ring */}
-                    <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-40"></div>
+                    {/* Pulsing ring for high confidence only */}
+                    {recommendation.confidence >= 85 && (
+                      <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-40"></div>
+                    )}
                   </div>
                 </div>
               )}
@@ -121,16 +141,16 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
               )}
               <div className="flex flex-col space-y-4 h-full">
                 <div className="flex items-center space-x-3">
-                  <div className={`text-2xl p-2 rounded-xl transition-all ${
+                  <div className={`text-xl lg:text-2xl p-2 rounded-xl transition-all ${
                     isSelected ? 'bg-primary shadow-md' : 'bg-secondary group-hover:bg-primary group-hover:shadow-md'
                   }`}>{icon}</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-primary mb-1 leading-tight">{config.name}</h4>
+                    <h4 className="text-base lg:text-lg font-bold text-primary mb-1 leading-tight">{config.name}</h4>
                   </div>
                 </div>
-                <p className="text-sm text-secondary leading-relaxed flex-shrink-0">{config.description}</p>
+                <p className="text-xs lg:text-sm text-secondary leading-relaxed flex-shrink-0">{config.description}</p>
 
-                <div className="bg-tertiary rounded-xl p-3 space-y-2 text-xs flex-grow">
+                <div className="bg-tertiary rounded-xl p-2 lg:p-3 space-y-1 lg:space-y-2 text-xs flex-grow">
                   {config.dimensions && (
                     <div className="flex justify-between items-center">
                       <span className="text-secondary">Dimensions:</span>
@@ -170,8 +190,8 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
                 </div>
 
                 {config.use_case && (
-                  <div className="bg-secondary rounded-xl p-3 mt-auto border border-primary">
-                    <p className="text-sm text-primary font-medium">
+                  <div className="bg-secondary rounded-xl p-2 lg:p-3 mt-auto border border-primary">
+                    <p className="text-xs lg:text-sm text-primary font-medium">
                       ✨ Perfect for: {config.use_case}
                     </p>
                   </div>

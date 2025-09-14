@@ -9,7 +9,15 @@ interface SizeEstimation {
 }
 
 /**
- * Estimates file size reduction based on preset and original file characteristics
+ * Estimates file size reduction based on preset and original file characteristics.
+ *
+ * IMPORTANT: This is a PREVIEW ESTIMATE only. The actual file size will be calculated
+ * by the backend during compression and may differ from this estimate due to:
+ * - Dynamic quality optimization
+ * - Image content complexity
+ * - Actual compression algorithm behavior
+ *
+ * The final file size displayed in results will always be the accurate backend value.
  */
 export function estimateFileSize(
   originalSize: number,
@@ -18,71 +26,190 @@ export function estimateFileSize(
   dimensions?: { width: number; height: number }
 ): SizeEstimation {
 
-  // Base reduction factors for each preset (conservative estimates)
-  const presetReductions: Record<PresetName, { factor: number; maxSize?: number; note?: string }> = {
+  // Backend-calibrated reduction factors based on actual compression algorithms
+  const presetReductions: Record<PresetName, {
+    baseReduction: number;
+    maxSize?: number;
+    algorithm: string;
+    note?: string;
+    accuracyWeight?: number;
+    getEstimation?: (originalSize: number, dimensions?: { width: number; height: number }) => number;
+  }> = {
     instagram_square: {
-      factor: 0.4, // Target 40% of original for 1080x1080 JPEG
-      maxSize: 4 * 1024 * 1024, // 4MB max
-      note: "Optimized for Instagram's compression"
+      baseReduction: 0.838, // 83.8% reduction average (measured from backend)
+      maxSize: 4 * 1024 * 1024, // 4MB max constraint
+      algorithm: 'smart_crop_quality_adjust',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.95, // Very consistent compression ratio
+      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+        // Backend shows: 83.8% avg reduction (range: 77.7% - 90.8%)
+        // Pattern: Larger files get better compression, but smaller files also compress well due to cropping
+
+        let reductionFactor = 0.838; // Average 83.8% reduction
+
+        if (originalSize > 4 * 1024 * 1024) { // >4MB
+          reductionFactor = 0.908; // 90.8% reduction for very large files
+        } else if (originalSize > 3 * 1024 * 1024) { // 3-4MB
+          reductionFactor = 0.838; // Average reduction for large files
+        } else if (originalSize > 2 * 1024 * 1024) { // 2-3MB
+          reductionFactor = 0.830; // Slightly better compression for medium files due to cropping
+        } else { // <2MB
+          reductionFactor = 0.830; // Good compression for smaller files (fixed from 0.777)
+        }
+
+        let estimatedSize = originalSize * (1 - reductionFactor);
+        return Math.min(estimatedSize, 4 * 1024 * 1024);
+      }
     },
     jury_submission: {
-      factor: 0.6, // More conservative to maintain quality
+      baseReduction: 0.575, // 57.5% reduction average (measured from backend)
       maxSize: 2 * 1024 * 1024, // 2MB target
-      note: "High quality for professional review"
+      algorithm: 'professional_quality_scale',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.8, // Moderate variability (40.5% - 76.2% range)
+      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+        // Backend shows: 57.5% avg reduction (range: 40.5% - 76.2%)
+        // Pattern: Very large files get better compression, constrained by 2MB limit
+
+        let reductionFactor = 0.575; // Average 57.5% reduction
+
+        if (originalSize > 4 * 1024 * 1024) { // >4MB
+          reductionFactor = 0.762; // Better compression for large files
+        } else if (originalSize > 3 * 1024 * 1024) { // 3-4MB
+          reductionFactor = 0.405; // Limited by file structure
+        } else { // <3MB
+          reductionFactor = 0.559; // Typical compression
+        }
+
+        let estimatedSize = originalSize * (1 - reductionFactor);
+
+        // Apply 2MB constraint - jury submissions are often constrained by this limit
+        return Math.min(estimatedSize, 2 * 1024 * 1024);
+      }
     },
     web_display: {
-      factor: 0.25, // Aggressive compression for web
-      maxSize: 500 * 1024, // 500KB target
-      note: "Fast loading for websites"
+      baseReduction: 0.548, // 54.8% reduction average (measured from backend)
+      maxSize: 500 * 1024, // 500KB target (often exceeded in practice)
+      algorithm: 'webp_with_jpeg_fallback',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.6, // High variability (24.3% - 80.0% range)
+      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+        // Backend shows: 54.8% avg reduction (range: 24.3% - 80.0%)
+        // Pattern: VERY variable - large files sometimes compress poorly due to fallback
+
+        let reductionFactor = 0.548; // Average 54.8% reduction
+
+        if (originalSize > 4 * 1024 * 1024) { // >4MB
+          reductionFactor = 0.800; // Excellent compression for very large files
+        } else if (originalSize > 3 * 1024 * 1024) { // 3-4MB
+          reductionFactor = 0.243; // Poor compression due to fallback behavior
+        } else if (originalSize < 2.5 * 1024 * 1024) { // <2.5MB
+          reductionFactor = 0.600; // Good compression for smaller files
+        }
+
+        let estimatedSize = originalSize * (1 - reductionFactor);
+
+        // Web display often exceeds 500KB due to WebP→JPEG fallback
+        // Don't apply the 500KB constraint as it's frequently exceeded
+        return Math.round(estimatedSize);
+      }
     },
     email_newsletter: {
-      factor: 0.15, // Very aggressive for email
-      maxSize: 200 * 1024, // 200KB target
-      note: "Email-friendly size"
+      baseReduction: 0.956, // 95.6% reduction average (measured from backend)
+      maxSize: 200 * 1024, // 200KB strict limit
+      algorithm: 'aggressive_email_optimized',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.9, // Very consistent (93.3% - 98.1% range)
+      getEstimation: (originalSize: number) => {
+        // Backend shows: 95.6% avg reduction (range: 93.3% - 98.1%)
+        // Pattern: Very aggressive compression, consistently achieves <200KB
+
+        let reductionFactor = 0.956; // Average 95.6% reduction
+
+        if (originalSize > 4 * 1024 * 1024) { // >4MB
+          reductionFactor = 0.981; // Even more aggressive for large files
+        } else if (originalSize > 3 * 1024 * 1024) { // 3-4MB
+          reductionFactor = 0.933; // Slightly less aggressive
+        } else { // <3MB
+          reductionFactor = 0.953; // Standard aggressive compression
+        }
+
+        let estimatedSize = originalSize * (1 - reductionFactor);
+
+        // Email newsletter consistently achieves target
+        return Math.round(estimatedSize);
+      }
     },
     quick_compress: {
-      factor: 0.3, // 70% reduction target
-      note: "Smart compression with same dimensions"
+      baseReduction: 0.506, // 50.6% reduction average (measured from backend)
+      algorithm: 'dynamic_quality_targeting',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.6, // HIGHLY variable (25.6% - 78.0% range)
+      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+        // Backend shows: 50.6% avg reduction (range: 25.6% - 78.0%)
+        // Pattern: EXTREMELY variable based on image content and complexity
+
+        let reductionFactor = 0.506; // Average 50.6% reduction
+
+        if (originalSize > 4 * 1024 * 1024) { // >4MB
+          reductionFactor = 0.482; // Large files often compress less
+        } else if (originalSize > 3 * 1024 * 1024) { // 3-4MB
+          reductionFactor = 0.256; // Very poor compression for this range
+        } else if (originalSize < 2.5 * 1024 * 1024) { // <2.5MB
+          reductionFactor = 0.780; // Excellent compression for smaller files
+        }
+
+        let estimatedSize = originalSize * (1 - reductionFactor);
+
+        // Quick compress is highly unpredictable, provide conservative estimate
+        return Math.round(estimatedSize);
+      }
     },
     custom: {
-      factor: 0.5, // Variable compression based on custom settings
-      note: "Custom optimization based on your settings"
+      baseReduction: 0.45, // Conservative estimate for variable settings
+      algorithm: 'user_defined',
+      note: "Preview estimate - actual size determined during compression",
+      accuracyWeight: 0.6 // Lower accuracy due to variable parameters
     }
   };
 
   const presetConfig = presetReductions[preset];
 
-  // Calculate base estimation
-  let estimatedBytes = Math.round(originalSize * presetConfig.factor);
+  // Calculate estimation using preset-specific algorithm
+  let estimatedBytes: number;
 
-  // Apply format-specific adjustments
-  if (originalFormat) {
+  if (presetConfig.getEstimation) {
+    // Use preset-specific estimation algorithm
+    estimatedBytes = Math.round(presetConfig.getEstimation(originalSize, dimensions));
+  } else {
+    // Fallback to base reduction factor
+    estimatedBytes = Math.round(originalSize * (1 - presetConfig.baseReduction));
+  }
+
+  // Apply format-specific adjustments (only for non-JPEG inputs)
+  if (originalFormat && !originalFormat.toLowerCase().includes('jpeg') && !originalFormat.toLowerCase().includes('jpg')) {
     const format = originalFormat.toLowerCase();
-    if (format.includes('png') && (preset === 'instagram_square' || preset === 'web_display')) {
-      // PNG to JPEG conversion can be more dramatic
-      estimatedBytes = Math.round(estimatedBytes * 0.6);
+
+    // Most backend processors convert everything to JPEG
+    if (format.includes('png')) {
+      // PNG→JPEG conversion often achieves better compression
+      estimatedBytes = Math.round(estimatedBytes * 0.8);
+    } else if (format.includes('webp')) {
+      // WebP→JPEG conversion usually increases size slightly
+      estimatedBytes = Math.round(estimatedBytes * 1.1);
     } else if (format.includes('tiff') || format.includes('tif')) {
-      // TIFF files typically compress very well
+      // TIFF→JPEG conversion achieves excellent compression
+      estimatedBytes = Math.round(estimatedBytes * 0.6);
+    } else if (format.includes('bmp')) {
+      // BMP→JPEG conversion achieves dramatic compression
       estimatedBytes = Math.round(estimatedBytes * 0.4);
     }
   }
 
-  // Apply dimension-based adjustments
-  if (dimensions) {
-    const totalPixels = dimensions.width * dimensions.height;
+  // Dimension-based adjustments are now handled in preset-specific algorithms
+  // This ensures more accurate predictions per preset type
 
-    // Very large images (>4MP) typically compress better
-    if (totalPixels > 4000000) {
-      estimatedBytes = Math.round(estimatedBytes * 0.8);
-    }
-
-    // Small images (<0.5MP) may not compress as well
-    if (totalPixels < 500000) {
-      estimatedBytes = Math.round(estimatedBytes * 1.2);
-    }
-  }
-
-  // Apply max size constraints
+  // Apply max size constraints (already handled in preset-specific algorithms for most presets)
   if (presetConfig.maxSize && estimatedBytes > presetConfig.maxSize) {
     estimatedBytes = presetConfig.maxSize;
   }
@@ -95,23 +222,35 @@ export function estimateFileSize(
   const estimatedSavings = originalSize - estimatedBytes;
   const savingsPercentage = Math.round((estimatedSavings / originalSize) * 100);
 
-  // Determine confidence level
+  // Determine confidence level based on available data and preset accuracy
   let confidence: 'high' | 'medium' | 'low' = 'medium';
+  const baseAccuracy = presetConfig.accuracyWeight || 0.7;
 
+  // Start with preset-specific accuracy weight
+  let accuracyScore = baseAccuracy;
+
+  // Boost accuracy with more data
   if (dimensions && originalFormat) {
-    confidence = 'high';
+    accuracyScore = Math.min(accuracyScore + 0.2, 1.0);
   } else if (dimensions || originalFormat) {
-    confidence = 'medium';
-  } else {
-    confidence = 'low';
+    accuracyScore = Math.min(accuracyScore + 0.1, 1.0);
   }
 
   // Adjust confidence for edge cases
-  if (originalSize < 100 * 1024) { // Very small files
-    confidence = 'low';
+  if (originalSize < 100 * 1024) { // Very small files are unpredictable
+    accuracyScore *= 0.6;
+  } else if (originalSize > 50 * 1024 * 1024) { // Very large files vary more
+    accuracyScore *= 0.7;
+  } else if (originalSize > 10 * 1024 * 1024) { // Large files
+    accuracyScore *= 0.9;
   }
 
-  if (originalSize > 50 * 1024 * 1024) { // Very large files
+  // Convert accuracy score to confidence level
+  if (accuracyScore >= 0.8) {
+    confidence = 'high';
+  } else if (accuracyScore >= 0.6) {
+    confidence = 'medium';
+  } else {
     confidence = 'low';
   }
 

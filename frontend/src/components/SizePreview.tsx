@@ -29,12 +29,12 @@ export function SizePreview({ originalFile, preset, dimensions, className = '' }
   };
 
   return (
-    <div className={`bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-200 shadow-lg ${className}`}>
-      <div className="flex items-start space-x-4">
+    <div className={`bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 lg:p-6 border border-indigo-200 shadow-lg ${className}`}>
+      <div className="flex items-start space-x-3 lg:space-x-4">
         {/* Icon */}
         <div className="flex-shrink-0">
-          <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+            <svg className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
@@ -43,7 +43,7 @@ export function SizePreview({ originalFile, preset, dimensions, className = '' }
         {/* Content */}
         <div className="flex-grow">
           <div className="flex items-center space-x-2 mb-2">
-            <h4 className="text-lg font-bold text-indigo-900">Size Preview</h4>
+            <h4 className="text-base lg:text-lg font-bold text-indigo-900">Size Preview</h4>
             <div className={`
               inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-semibold border
               ${confidenceColor[estimation.confidence]}

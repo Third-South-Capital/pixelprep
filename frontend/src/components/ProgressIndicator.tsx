@@ -82,8 +82,8 @@ export function ProgressIndicator({ currentStep, isProcessing = false }: Progres
                         step.icon
                       )}
 
-                      {/* Pulse ring for active step */}
-                      {state === 'active' && !isProcessing && (
+                      {/* Pulse ring for active step - only show when user can actually act */}
+                      {state === 'active' && !isProcessing && step.key === 'upload' && (
                         <div className="absolute inset-0 rounded-full border-2 border-accent-primary animate-ping opacity-75"></div>
                       )}
                     </div>
