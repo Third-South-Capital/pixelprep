@@ -1,22 +1,24 @@
 {
-  "preset": "instagram_square",
-  "original_file": "met_square_painting_Edgar_Degas_A_Woman_Seated_beside_a_Vase_o.jpg",
-  "optimized_file": "met_square_painting_Edgar_Degas_A_Woman_Seated_beside_a_Vase_o_instagram_square.jpg",
+  "preset": "email_newsletter",
+  "original_file": "met_portrait_painting_Jacques_Louis_David_The_Death_of_Socrates.jpg",
+  "optimized_file": "met_portrait_painting_Jacques_Louis_David_The_Death_of_Socrates_email_newsletter.jpg",
   "processor_config": {
-    "name": "Instagram Square",
-    "description": "Optimized for Instagram square posts",
-    "dimensions": "1080\u00d71080px",
-    "max_file_size": "<4MB",
+    "name": "Email Newsletter",
+    "description": "Optimized for email newsletters and marketing campaigns",
+    "dimensions": "600px wide (height auto)",
+    "max_file_size": "<200KB",
     "format": "JPEG",
-    "color_space": "sRGB",
-    "aspect_ratio": "1:1",
-    "use_case": "Social media posts, portfolio sharing, engagement"
+    "aspect_ratio": "Preserved",
+    "use_case": "Email marketing, newsletters, mobile-friendly delivery"
   },
   "metadata": {
-    "file_size_bytes": 412579,
-    "file_size_mb": 0.39,
-    "quality": 95,
-    "dimensions": "1080\u00d71080",
-    "format": "JPEG"
+    "file_size_bytes": 33538,
+    "file_size_kb": 32.8,
+    "quality": 85,
+    "dimensions": "600\u00d7399",
+    "format": "JPEG",
+    "meets_email_requirements": true,
+    "email_friendly": true,
+    "mobile_optimized": true
   }
 }
