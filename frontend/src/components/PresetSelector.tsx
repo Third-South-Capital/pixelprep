@@ -20,7 +20,7 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
 
   // Add custom preset if enabled
   const presets: { key: PresetName; icon: string }[] = [...basePresets];
-  if (processors.custom_presets_enabled && processors.processors.custom) {
+  if (processors.custom_presets_enabled) {
     presets.push({ key: 'custom', icon: '⚙️' });
   }
 
