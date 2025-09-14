@@ -29,6 +29,7 @@ let onboardingState: OnboardingState = {
 };
 
 const onboardingListeners = new Set<() => void>();
+let onboardingInitialized = false;
 
 function notifyListeners() {
   onboardingListeners.forEach(listener => listener());
@@ -41,15 +42,20 @@ export function useOnboarding() {
     const listener = () => forceUpdate(prev => prev + 1);
     onboardingListeners.add(listener);
 
-    // Check localStorage first - don't restart onboarding if user already completed it
-    const hasCompleted = localStorage.getItem('pixelprep_onboarding_completed');
-    if (hasCompleted) {
-      console.log('[ONBOARDING] User has already completed onboarding, not starting');
-      onboardingState.hasSeenOnboarding = true;
-      onboardingState.isActive = false;
-    } else if (!onboardingState.isActive && !onboardingState.hasSeenOnboarding) {
-      console.log('[ONBOARDING] Starting onboarding system for new user...');
-      startOnboarding();
+    // Only initialize once globally to prevent race conditions
+    if (!onboardingInitialized) {
+      onboardingInitialized = true;
+
+      // Check localStorage first - don't restart onboarding if user already completed it
+      const hasCompleted = localStorage.getItem('pixelprep_onboarding_completed');
+      if (hasCompleted) {
+        console.log('[ONBOARDING] User has already completed onboarding, not starting');
+        onboardingState.hasSeenOnboarding = true;
+        onboardingState.isActive = false;
+      } else {
+        console.log('[ONBOARDING] Starting onboarding system for new user...');
+        startOnboarding();
+      }
     }
 
     return () => {
@@ -141,6 +147,7 @@ function resetOnboarding() {
   onboardingState.isActive = false;
   onboardingState.completedSteps.clear();
   onboardingState.currentStep = 0;
+  onboardingInitialized = false; // Allow re-initialization
   notifyListeners();
 }
 
@@ -349,10 +356,11 @@ export function OnboardingTooltip({
 
 // Helper component for onboarding controls
 export function OnboardingControls() {
-  const { isActive, hasSeenOnboarding } = useOnboarding();
+  const { isActive } = useOnboarding();
 
-  // Show controls in development mode or for testing
-  const showControls = import.meta.env.DEV || !hasSeenOnboarding || isActive;
+  // Only show controls in development mode or when onboarding is actively running
+  // Don't show for new users who simply haven't completed onboarding yet
+  const showControls = import.meta.env.DEV || isActive;
 
   if (showControls) {
     return (
