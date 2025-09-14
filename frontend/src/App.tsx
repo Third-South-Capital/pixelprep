@@ -10,6 +10,7 @@ import { DarkModeToggle } from './components/DarkModeToggle';
 import { ProgressIndicator } from './components/ProgressIndicator';
 import { SizePreview } from './components/SizePreview';
 import { OnboardingTooltip, OnboardingControls } from './components/OnboardingTooltip';
+import { DebugPanel } from './components/DebugPanel';
 import { apiService } from './services/api';
 import { authService, type PixelPrepUser } from './services/auth';
 import { configService } from './services/config';
@@ -19,6 +20,8 @@ import type { UploadState, ProcessorsResponse, PresetName } from './types';
 
 function App() {
   const [processors, setProcessors] = useState<ProcessorsResponse | null>(null);
+  const [apiCallStatus, setApiCallStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [apiError, setApiError] = useState<string | undefined>(undefined);
   const [uploadState, setUploadState] = useState<UploadState>({
     file: null,
     preset: null,
@@ -88,13 +91,18 @@ function App() {
 
         // Load processors
         console.log('🔍 [APP] Loading processors from API...');
+        setApiCallStatus('loading');
         try {
           const processorsData = await apiService.getProcessors();
           console.log('🔍 [APP] Processors loaded successfully:', processorsData);
           console.log('🔍 [APP] Custom presets enabled in response:', processorsData?.custom_presets_enabled);
           setProcessors(processorsData);
+          setApiCallStatus('success');
+          setApiError(undefined);
         } catch (error) {
           console.error('🚨 [APP] Failed to load processors:', error);
+          setApiCallStatus('error');
+          setApiError(error instanceof Error ? error.message : 'Unknown error');
         }
 
         // Set up Supabase auth state listener (only if auth is enabled)
@@ -618,6 +626,14 @@ function App() {
           onClose={handleCloseLoginPrompt}
         />
       )}
+
+      {/* Debug Panel - Show in both dev and production for debugging custom presets issue */}
+      <DebugPanel
+        processors={processors}
+        apiCallStatus={apiCallStatus}
+        apiError={apiError}
+        showDebug={true} // Always show for now to debug production issue
+      />
     </div>
   );
 }
