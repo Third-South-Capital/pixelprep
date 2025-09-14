@@ -1,24 +1,26 @@
 {
-  "preset": "email_newsletter",
-  "original_file": "met_portrait_painting_Jacques_Louis_David_The_Death_of_Socrates.jpg",
-  "optimized_file": "met_portrait_painting_Jacques_Louis_David_The_Death_of_Socrates_email_newsletter.jpg",
+  "preset": "custom",
+  "original_file": "met_landscape_painting_Vincent_van_Gogh_Self-Portrait_with_a_Straw_Hat.jpg",
+  "optimized_file": "met_landscape_painting_Vincent_van_Gogh_Self-Portrait_with_a_Straw_Hat_custom.jpg",
   "processor_config": {
-    "name": "Email Newsletter",
-    "description": "Optimized for email newsletters and marketing campaigns",
-    "dimensions": "600px wide (height auto)",
-    "max_file_size": "<200KB",
-    "format": "JPEG",
-    "aspect_ratio": "Preserved",
-    "use_case": "Email marketing, newsletters, mobile-friendly delivery"
+    "name": "Custom (Quality)",
+    "description": "Prioritizes visual quality with higher compression settings - 4000\u00d73000px",
+    "dimensions": "4000\u00d73000px",
+    "max_file_size": "<0.1MB",
+    "format": "WEBP",
+    "aspect_ratio": "1.33:1",
+    "strategy": "quality",
+    "use_case": "Custom optimization prioritizing quality",
+    "customizable": true
   },
   "metadata": {
-    "file_size_bytes": 33538,
-    "file_size_kb": 32.8,
-    "quality": 85,
-    "dimensions": "600\u00d7399",
-    "format": "JPEG",
-    "meets_email_requirements": true,
-    "email_friendly": true,
-    "mobile_optimized": true
+    "file_size_bytes": 2265884,
+    "file_size_mb": 2.16,
+    "dimensions": "4000\u00d73000",
+    "format": "WEBP",
+    "meets_size_requirement": false,
+    "custom_width": 4000,
+    "custom_height": 3000,
+    "max_size_mb": 0.1
   }
 }

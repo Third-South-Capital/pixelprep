@@ -407,6 +407,7 @@ async def get_available_processors():
         "total_count": len(processors_info),
         "supported_formats": list(SUPPORTED_FORMATS),
         "max_file_size_mb": MAX_FILE_SIZE_MB,
+        "custom_presets_enabled": CUSTOM_PRESETS_ENABLED,
     }
 
 

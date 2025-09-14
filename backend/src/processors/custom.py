@@ -230,7 +230,7 @@ class CustomProcessor(BaseProcessor):
         max_size_bytes = int(self.max_size_mb * 1024 * 1024)
         quality = self.quality_start
 
-        while quality >= self.quality_min:
+        while quality >= (self.quality_min or 0):
             output_buffer = io.BytesIO()
 
             # Format-specific optimization
@@ -324,7 +324,7 @@ class CustomProcessor(BaseProcessor):
         final_quality = quality
 
         # Find optimal settings for target file size
-        while quality >= self.quality_min:
+        while quality >= (self.quality_min or 0):
             test_buffer = io.BytesIO()
             save_kwargs = {
                 'format': self.format,
