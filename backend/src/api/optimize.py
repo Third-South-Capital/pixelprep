@@ -402,6 +402,13 @@ async def get_available_processors():
     for processor_id, processor in PROCESSORS.items():
         processors_info[processor_id] = processor.get_preset_config()
 
+    # Add custom processor when feature flag is enabled
+    if CUSTOM_PRESETS_ENABLED:
+        # Create a default custom processor instance for metadata
+        from ..processors.custom import CustomProcessor
+        default_custom = CustomProcessor()
+        processors_info["custom"] = default_custom.get_preset_config()
+
     return {
         "processors": processors_info,
         "total_count": len(processors_info),
