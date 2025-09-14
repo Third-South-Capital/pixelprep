@@ -550,13 +550,14 @@ function App() {
                         ) : (
                           <OnboardingTooltip
                             id="start-processing"
-                            title="Almost There!"
-                            content="Your image will start optimizing automatically in a moment, or click here to begin immediately. The magic happens fast!"
+                            title="Ready to Optimize!"
+                            content="Click this button to start optimizing your image. You're in complete control - processing only starts when you click!"
                             position="top"
                             onboardingStep={3}
                           >
                             <button
                               onClick={() => {
+                                // Clear any pending timer (shouldn't exist now, but safe cleanup)
                                 if (autoProcessTimer) {
                                   clearTimeout(autoProcessTimer);
                                   setAutoProcessTimer(null);
