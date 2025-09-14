@@ -1,0 +1,22 @@
+{
+  "preset": "instagram_square",
+  "original_file": "met_square_painting_Edgar_Degas_A_Woman_Seated_beside_a_Vase_o.jpg",
+  "optimized_file": "met_square_painting_Edgar_Degas_A_Woman_Seated_beside_a_Vase_o_instagram_square.jpg",
+  "processor_config": {
+    "name": "Instagram Square",
+    "description": "Optimized for Instagram square posts",
+    "dimensions": "1080\u00d71080px",
+    "max_file_size": "<4MB",
+    "format": "JPEG",
+    "color_space": "sRGB",
+    "aspect_ratio": "1:1",
+    "use_case": "Social media posts, portfolio sharing, engagement"
+  },
+  "metadata": {
+    "file_size_bytes": 412579,
+    "file_size_mb": 0.39,
+    "quality": 95,
+    "dimensions": "1080\u00d71080",
+    "format": "JPEG"
+  }
+}

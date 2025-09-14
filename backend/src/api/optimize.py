@@ -243,6 +243,12 @@ async def _process_image(
                     if not optimization_result["success"]:
                         # Still return the image even if storage fails
                         pass
+
+                # Read the ACTUAL saved file to ensure 100% consistency
+                # This avoids double-compression and guarantees identical file sizes
+                with open(tmp_optimized_path, 'rb') as saved_file:
+                    processed_content = io.BytesIO(saved_file.read())
+
             finally:
                 # Clean up temporary files
                 if tmp_original_path:
@@ -256,15 +262,6 @@ async def _process_image(
                         Path(tmp_optimized_path).unlink(missing_ok=True)
                     except Exception:
                         pass  # Ignore cleanup failures
-
-            # Read processed image for ZIP creation using processor-specific compression
-            processed_content = io.BytesIO()
-
-            # Use processor-specific compression parameters
-            compression_params = processor.get_compression_params(quality=95)
-            processed_image.save(processed_content, **compression_params)
-
-            processed_content.seek(0)
 
             return {
                 "image_data": processed_content.getvalue(),
@@ -289,14 +286,10 @@ async def _process_image(
                     tmp_file_path = tmp_file.name
                     metadata = processor.save_optimized(processed_image, tmp_file.name)
 
-                # Read processed image back for ZIP creation using processor-specific compression
-                processed_content = io.BytesIO()
-
-                # Use processor-specific compression parameters
-                compression_params = processor.get_compression_params(quality=95)
-                processed_image.save(processed_content, **compression_params)
-
-                processed_content.seek(0)
+                # Read the ACTUAL saved file to ensure 100% consistency
+                # This avoids double-compression and guarantees identical file sizes
+                with open(tmp_file_path, 'rb') as saved_file:
+                    processed_content = io.BytesIO(saved_file.read())
 
                 return {
                     "image_data": processed_content.getvalue(),
