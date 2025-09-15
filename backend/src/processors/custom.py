@@ -137,6 +137,10 @@ class CustomProcessor(BaseProcessor):
         Returns:
             Processed PIL Image with custom specifications
         """
+        # Fix orientation first for all formats
+        from .optimization_utils import OptimizationUtils
+        image = OptimizationUtils.fix_image_orientation(image)
+
         # Handle different output formats
         if self.format == 'PNG':
             # PNG doesn't need RGB conversion, supports transparency

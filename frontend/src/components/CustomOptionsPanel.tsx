@@ -215,7 +215,7 @@ export function CustomOptionsPanel({ customOptimization, onUpdate, processors }:
           <input
             type="range"
             min="0.1"
-            max="10"
+            max="25"
             step="0.1"
             value={customOptimization.maxSizeMb}
             onChange={(e) => handleFileSizeChange(parseFloat(e.target.value))}
@@ -224,7 +224,7 @@ export function CustomOptionsPanel({ customOptimization, onUpdate, processors }:
           <div className="flex justify-between text-xs text-secondary">
             <span>0.1 MB</span>
             <span className="font-medium text-primary text-base">{customOptimization.maxSizeMb} MB</span>
-            <span>10 MB</span>
+            <span>25 MB</span>
           </div>
         </div>
         <p className="text-xs text-secondary">

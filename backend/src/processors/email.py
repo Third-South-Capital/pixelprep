@@ -28,8 +28,8 @@ class EmailNewsletterProcessor(BaseProcessor):
         Returns:
             Processed PIL Image optimized for email newsletters
         """
-        # Ensure RGB mode for JPEG output
-        image = self._ensure_rgb(image)
+        # Fix orientation and ensure RGB mode for JPEG output
+        image = self._fix_orientation_and_ensure_rgb(image)
 
         # Resize to target width while preserving aspect ratio
         resized_image = self._resize_to_width(image, self.TARGET_WIDTH)

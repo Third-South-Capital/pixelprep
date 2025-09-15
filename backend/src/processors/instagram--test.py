@@ -86,7 +86,7 @@ class TestInstagramSquareProcessor:
                 pixels.append((x % 256, y % 256, (x + y) % 256))
         image.putdata(pixels)
 
-        optimized = self.processor._optimize_file_size(image)
+        optimized = self.processor.optimize_file_size(image, max_size_bytes=4*1024*1024)
 
         assert optimized.size == (1080, 1080)
         assert optimized.mode == 'RGB'

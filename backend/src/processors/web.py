@@ -29,8 +29,8 @@ class WebDisplayProcessor(BaseProcessor):
         Returns:
             Processed PIL Image optimized for web display
         """
-        # Ensure RGB mode
-        image = self._ensure_rgb(image)
+        # Fix orientation and ensure RGB mode
+        image = self._fix_orientation_and_ensure_rgb(image)
 
         # Resize to target width while preserving aspect ratio
         resized_image = self._resize_to_width(image, self.TARGET_WIDTH)

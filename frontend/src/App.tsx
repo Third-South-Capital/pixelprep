@@ -360,7 +360,7 @@ function App() {
             PixelPrep
           </h1>
           <p className="text-xl text-secondary mb-4 max-w-3xl mx-auto">
-            Professional image optimization designed for <span className="font-semibold accent-primary">artists</span>. Transform your artwork for Instagram, jury submissions, websites, and more – with the quality you demand.
+            Professional image optimization designed for <span className="font-semibold accent-primary">artists</span>. Resize and optimize your artwork for Instagram, jury submissions, websites, and more – with the quality you demand.
           </p>
 
           {/* Usage indicator for anonymous users (only show if auth is enabled) */}
@@ -422,7 +422,7 @@ function App() {
               {/* Upload Zone - Only show when no file is selected */}
               {!uploadState.file && (
                 <div className="w-full max-w-4xl">
-                  <SimpleTooltip content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure." title="Upload Your Artwork">
+                  <SimpleTooltip content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 25MB. Your image stays private and secure." title="Upload Your Artwork">
                     <UploadZone
                       onFileSelect={handleFileSelect}
                       selectedFile={uploadState.file}

@@ -38,7 +38,7 @@ export function UploadZone({ onFileSelect, selectedFile, error }: UploadZoneProp
       'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.tiff', '.bmp']
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 25 * 1024 * 1024, // 25MB
   });
 
   const formatFileSize = (bytes: number) => {
@@ -135,7 +135,7 @@ export function UploadZone({ onFileSelect, selectedFile, error }: UploadZoneProp
                 </p>
                 <div className="bg-accent-primary/5 border border-accent-primary/20 rounded-xl p-5 max-w-lg mx-auto">
                   <p className="text-base text-secondary font-medium">
-                    Supports <span className="font-bold text-accent-primary">JPEG, PNG, WebP, TIFF, BMP</span> up to <span className="font-bold text-accent-primary">10MB</span>
+                    Supports <span className="font-bold text-accent-primary">JPEG, PNG, WebP, TIFF, BMP</span> up to <span className="font-bold text-accent-primary">25MB</span>
                   </p>
                 </div>
               </div>

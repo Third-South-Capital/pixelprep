@@ -28,8 +28,8 @@ class QuickCompressProcessor(BaseProcessor):
         Returns:
             Processed PIL Image with reduced file size
         """
-        # Ensure RGB mode for JPEG output (most efficient compression)
-        image = self._ensure_rgb(image)
+        # Fix orientation and ensure RGB mode for JPEG output (most efficient compression)
+        image = self._fix_orientation_and_ensure_rgb(image)
 
         # Get original file size estimate
         original_size = self._estimate_file_size(image)

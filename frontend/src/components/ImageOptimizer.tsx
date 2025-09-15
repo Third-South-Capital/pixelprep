@@ -156,7 +156,7 @@ export function ImageOptimizer({
             <div className="w-full max-w-4xl">
               <div
                 className="bg-primary rounded-xl shadow-lg border border-primary p-10"
-                title="Upload Your Artwork: Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
+                title="Upload Your Artwork: Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 25MB. Your image stays private and secure."
               >
                 <UploadZone
                   onFileSelect={handleFileSelect}

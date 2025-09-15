@@ -31,6 +31,23 @@ class BaseProcessor(ABC):
         """
         pass
 
+    def _fix_orientation_and_ensure_rgb(self, image: Image.Image) -> Image.Image:
+        """Fix EXIF orientation and convert image to RGB mode if necessary."""
+        # First fix orientation based on EXIF data
+        image = OptimizationUtils.fix_image_orientation(image)
+
+        # Then ensure RGB mode
+        if image.mode in ('RGBA', 'LA'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'RGBA':
+                background.paste(image, mask=image.split()[-1])
+            else:
+                background.paste(image, mask=image.split()[-1])
+            return background
+        elif image.mode != 'RGB':
+            return image.convert('RGB')
+        return image
+
     def _ensure_rgb(self, image: Image.Image) -> Image.Image:
         """Convert image to RGB mode if necessary."""
         if image.mode in ('RGBA', 'LA'):

@@ -40,8 +40,8 @@ class InstagramSquareProcessor(BaseProcessor):
         logger.info(f"Initial PIL image: size={image.size}, mode={image.mode}, format={image.format}")
         logger.info(f"Initial PIL memory size: {initial_size} bytes ({initial_size/1024:.1f} KB)")
 
-        # Ensure RGB mode for JPEG output
-        image = self._ensure_rgb(image)
+        # Fix orientation and ensure RGB mode for JPEG output
+        image = self._fix_orientation_and_ensure_rgb(image)
         rgb_size = self.get_image_memory_size(image)
         logger.info(f"After RGB conversion: mode={image.mode}, memory_size={rgb_size} bytes ({rgb_size/1024:.1f} KB)")
 

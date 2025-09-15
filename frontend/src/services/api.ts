@@ -243,7 +243,7 @@ class ApiService {
   }
 
   validateFile(file: File): { isValid: boolean; error?: string } {
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_SIZE = 25 * 1024 * 1024; // 25MB
     const SUPPORTED_TYPES = [
       'image/jpeg',
       'image/jpg', 
@@ -256,7 +256,7 @@ class ApiService {
     if (file.size > MAX_SIZE) {
       return {
         isValid: false,
-        error: `File size must be less than 10MB. Current size: ${Math.round(file.size / 1024 / 1024 * 100) / 100}MB`
+        error: `File size must be less than 25MB. Current size: ${Math.round(file.size / 1024 / 1024 * 100) / 100}MB`
       };
     }
 

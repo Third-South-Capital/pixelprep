@@ -35,7 +35,7 @@ PROCESSORS = {
 }
 
 SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".webp", ".tiff", ".bmp"}
-MAX_FILE_SIZE_MB = 10
+MAX_FILE_SIZE_MB = 25
 
 
 @router.post("/")

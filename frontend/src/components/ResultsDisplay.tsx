@@ -130,38 +130,8 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
           Optimization Complete!
         </h2>
         <p className="text-xl text-gray-700">Your artwork has been professionally optimized and is ready to download</p>
-        <div className="mt-4 inline-block bg-emerald-100 rounded-full px-4 py-2">
-          <p className="text-sm font-medium text-emerald-800">✨ Ready to wow your audience</p>
-        </div>
       </div>
 
-      {/* Celebratory Savings Display */}
-      {savings && !savings.isIncrease && savings.percentage > 0 && (
-        <div className="mb-12 text-center">
-          <div className="inline-block bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl p-8 shadow-2xl border-2 border-green-300 transform hover:scale-105 transition-transform duration-200">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mr-4">
-                <svg className="w-8 h-8 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <div className="text-4xl font-black text-white mb-2">
-                  You saved {formatFileSize(savings.bytes)}!
-                </div>
-                <div className="text-xl text-white/90 font-semibold">
-                  <AnimatedCounter from={0} to={savings.percentage} duration={1500} /> reduction
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/10 rounded-xl px-6 py-3">
-              <p className="text-white text-lg font-medium">
-                🎉 That's <span className="font-bold">{savings.percentage}% smaller</span> while keeping the same quality!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="bg-gradient-to-r from-gray-50 to-purple-50 rounded-2xl p-8 mb-12">
         <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -261,7 +231,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Before & After Comparison
               </h3>
-              <p className="text-gray-600">See the transformation of your artwork</p>
+              <p className="text-gray-600">See the optimization results for your artwork</p>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -338,6 +308,53 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
         )}
       </div>
 
+      {/* Completion Steps Indicator */}
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 mb-8 shadow-lg">
+        <div className="flex items-center justify-center space-x-8">
+          {/* Step 1: Upload */}
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-emerald-800 font-medium">Upload</span>
+          </div>
+
+          {/* Step 2: Optimize */}
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-emerald-800 font-medium">Optimize</span>
+          </div>
+
+          {/* Step 3: Download */}
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+              3
+            </div>
+            <span className="text-emerald-800 font-medium">Download</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Primary Download Button - Moved above preset info */}
+      {optimizedBlob && (
+        <div className="flex justify-center mb-12">
+          <DownloadButton
+            blob={optimizedBlob}
+            filename={isZip
+              ? `optimized_${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.zip`
+              : `${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.${result.metadata.format.toLowerCase()}`
+            }
+            isZip={isZip}
+          />
+        </div>
+      )}
+
       {/* Preset Details */}
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-8 mb-12 shadow-lg">
         <div className="text-center">
@@ -351,7 +368,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
             {result.processor_config.name} Preset
           </h3>
           <p className="text-lg text-indigo-700 mb-4">{result.processor_config.description}</p>
-          
+
           {result.processor_config.use_case && (
             <div className="bg-indigo-100 rounded-xl p-4 inline-block">
               <p className="text-sm font-medium text-indigo-800">
@@ -364,19 +381,6 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
 
       {/* Action Buttons */}
       <div className="space-y-8">
-        {/* Primary Download Button */}
-        {optimizedBlob && (
-          <div className="flex justify-center">
-            <DownloadButton 
-              blob={optimizedBlob}
-              filename={isZip 
-                ? `optimized_${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.zip`
-                : `${originalFile.name.replace(/\.[^/.]+$/, '')}_${result.preset}.${result.metadata.format.toLowerCase()}`
-              }
-              isZip={isZip}
-            />
-          </div>
-        )}
         
         {/* Prominent "Optimize Another" CTA */}
         <div className="text-center space-y-4">

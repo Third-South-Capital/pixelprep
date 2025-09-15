@@ -30,8 +30,8 @@ class JurySubmissionProcessor(BaseProcessor):
         Returns:
             Processed PIL Image optimized for jury submissions
         """
-        # Ensure RGB mode for JPEG output
-        image = self._ensure_rgb(image)
+        # Fix orientation and ensure RGB mode for JPEG output
+        image = self._fix_orientation_and_ensure_rgb(image)
 
         # Resize to fit within max dimension while preserving aspect ratio
         resized_image = self._resize_to_max_dimension(image, self.TARGET_MAX_DIMENSION)

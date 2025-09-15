@@ -37,7 +37,7 @@ class TestOptimizeAPI:
 
         # Check Instagram processor is available
         assert "instagram_square" in data["processors"]
-        assert data["max_file_size_mb"] == 10
+        assert data["max_file_size_mb"] == 25
         assert ".jpg" in data["supported_formats"]
 
     def test_optimize_instagram_square_success(self):
