@@ -41,7 +41,7 @@ export function estimateFileSize(
       algorithm: 'smart_crop_quality_adjust',
       note: "Preview estimate - actual size determined during compression",
       accuracyWeight: 0.95, // Very consistent compression ratio
-      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+      getEstimation: (originalSize: number) => {
         // Backend shows: 83.8% avg reduction (range: 77.7% - 90.8%)
         // Pattern: Larger files get better compression, but smaller files also compress well due to cropping
 
@@ -57,7 +57,7 @@ export function estimateFileSize(
           reductionFactor = 0.830; // Good compression for smaller files (fixed from 0.777)
         }
 
-        let estimatedSize = originalSize * (1 - reductionFactor);
+        const estimatedSize = originalSize * (1 - reductionFactor);
         return Math.min(estimatedSize, 4 * 1024 * 1024);
       }
     },
@@ -67,7 +67,7 @@ export function estimateFileSize(
       algorithm: 'professional_quality_scale',
       note: "Preview estimate - actual size determined during compression",
       accuracyWeight: 0.8, // Moderate variability (40.5% - 76.2% range)
-      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+      getEstimation: (originalSize: number) => {
         // Backend shows: 57.5% avg reduction (range: 40.5% - 76.2%)
         // Pattern: Very large files get better compression, constrained by 2MB limit
 
@@ -81,7 +81,7 @@ export function estimateFileSize(
           reductionFactor = 0.559; // Typical compression
         }
 
-        let estimatedSize = originalSize * (1 - reductionFactor);
+        const estimatedSize = originalSize * (1 - reductionFactor);
 
         // Apply 2MB constraint - jury submissions are often constrained by this limit
         return Math.min(estimatedSize, 2 * 1024 * 1024);
@@ -93,7 +93,7 @@ export function estimateFileSize(
       algorithm: 'webp_with_jpeg_fallback',
       note: "Preview estimate - actual size determined during compression",
       accuracyWeight: 0.6, // High variability (24.3% - 80.0% range)
-      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+      getEstimation: (originalSize: number) => {
         // Backend shows: 54.8% avg reduction (range: 24.3% - 80.0%)
         // Pattern: VERY variable - large files sometimes compress poorly due to fallback
 
@@ -107,7 +107,7 @@ export function estimateFileSize(
           reductionFactor = 0.600; // Good compression for smaller files
         }
 
-        let estimatedSize = originalSize * (1 - reductionFactor);
+        const estimatedSize = originalSize * (1 - reductionFactor);
 
         // Web display often exceeds 500KB due to WebP→JPEG fallback
         // Don't apply the 500KB constraint as it's frequently exceeded
@@ -134,7 +134,7 @@ export function estimateFileSize(
           reductionFactor = 0.953; // Standard aggressive compression
         }
 
-        let estimatedSize = originalSize * (1 - reductionFactor);
+        const estimatedSize = originalSize * (1 - reductionFactor);
 
         // Email newsletter consistently achieves target
         return Math.round(estimatedSize);
@@ -145,7 +145,7 @@ export function estimateFileSize(
       algorithm: 'dynamic_quality_targeting',
       note: "Preview estimate - actual size determined during compression",
       accuracyWeight: 0.6, // HIGHLY variable (25.6% - 78.0% range)
-      getEstimation: (originalSize: number, _dimensions?: { width: number; height: number }) => {
+      getEstimation: (originalSize: number) => {
         // Backend shows: 50.6% avg reduction (range: 25.6% - 78.0%)
         // Pattern: EXTREMELY variable based on image content and complexity
 
@@ -159,7 +159,7 @@ export function estimateFileSize(
           reductionFactor = 0.780; // Excellent compression for smaller files
         }
 
-        let estimatedSize = originalSize * (1 - reductionFactor);
+        const estimatedSize = originalSize * (1 - reductionFactor);
 
         // Quick compress is highly unpredictable, provide conservative estimate
         return Math.round(estimatedSize);

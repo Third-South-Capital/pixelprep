@@ -89,7 +89,7 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
     // CRITICAL DATA INTEGRITY FIX: Use actual blob size (what user downloads) instead of metadata
     // This ensures GUI displays exactly the same size as what gets downloaded
     const actualBlobSize = optimizedBlob?.size || 0;
-    let optimizedSize = actualBlobSize > 0 ? actualBlobSize : result.metadata.file_size_bytes;
+    const optimizedSize = actualBlobSize > 0 ? actualBlobSize : result.metadata.file_size_bytes;
 
     // Validation: Log file size consistency for debugging
     console.log(`🔍 File Size Debug (DATA INTEGRITY CHECK):`);

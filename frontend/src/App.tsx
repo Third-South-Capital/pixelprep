@@ -49,9 +49,9 @@ function App() {
 
   // Expose cancelAutoProcessing globally for tour skip
   useEffect(() => {
-    (window as any).cancelAutoProcessing = cancelAutoProcessing;
+    (window as Record<string, unknown>).cancelAutoProcessing = cancelAutoProcessing;
     return () => {
-      delete (window as any).cancelAutoProcessing;
+      delete (window as Record<string, unknown>).cancelAutoProcessing;
     };
   }, [autoProcessTimer]);
 
