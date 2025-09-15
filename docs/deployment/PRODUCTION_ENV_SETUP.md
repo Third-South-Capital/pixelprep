@@ -1,6 +1,8 @@
 # PixelPrep Production Environment Variables Setup
 
-## 🔐 Required Environment Variables for Render.com
+## 🔐 Required Environment Variables for Production Deployment
+
+**Note**: This project is currently in development. Update URLs below when deploying to production.
 
 ### **Core Application Settings**
 ```bash
@@ -11,9 +13,9 @@ PORT=8000
 
 ### **CORS & Frontend Integration**
 ```bash
-FRONTEND_URL=https://third-south-capital.github.io/pixelprep
-BACKEND_URL=https://pixelprep.onrender.com
-CORS_ORIGINS=https://third-south-capital.github.io
+FRONTEND_URL=https://your-production-frontend-url.com
+BACKEND_URL=https://your-production-backend-url.com
+CORS_ORIGINS=https://your-production-frontend-url.com
 ```
 
 ### **🚨 CRITICAL: Supabase Configuration**
@@ -34,8 +36,8 @@ SUPABASE_JWT_SECRET=[your-jwt-secret-from-supabase]
 1. **Go to**: https://github.com/settings/applications/new
 2. **Application settings**:
    - **Application name**: PixelPrep Production
-   - **Homepage URL**: https://third-south-capital.github.io/pixelprep/
-   - **Authorization callback URL**: https://pixelprep.onrender.com/auth/github/callback
+   - **Homepage URL**: https://your-production-frontend-url.com
+   - **Authorization callback URL**: https://your-production-backend-url.com/auth/github/callback
 3. **Copy the generated values**:
 
 ```bash

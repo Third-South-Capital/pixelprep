@@ -13,9 +13,31 @@ bootstrap:
 install:
     uv sync
 
-# Run pytest on backend/
+# Run all tests
 test:
-    uv run pytest backend/
+    uv run pytest
+
+# Run tests with coverage report
+test-coverage:
+    uv run pytest --cov=backend/src --cov-report=html --cov-report=term
+
+# Run only fast tests (skip slow integration tests)
+test-fast:
+    uv run pytest -m "not slow"
+
+# Run specific test category
+test-api:
+    uv run pytest -m api
+
+test-processors:
+    uv run pytest -m processor
+
+test-auth:
+    uv run pytest -m auth
+
+# Run production validation
+test-production:
+    python scripts/phase2_validation.py
 
 # Run ruff check + format
 lint:

@@ -1,4 +1,5 @@
 import type { PresetName } from '../types';
+import { formatBytes, getSavingsDescription } from './commonUtils';
 
 interface SizeEstimation {
   estimatedBytes: number;
@@ -264,39 +265,11 @@ export function estimateFileSize(
 }
 
 /**
- * Formats file size with appropriate units
- */
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
-/**
  * Creates a readable description of estimated savings
  */
-export function getSavingsDescription(estimation: SizeEstimation): string {
-  const { savingsPercentage, confidence } = estimation;
-
-  const confidenceText = {
-    high: '',
-    medium: 'approximately ',
-    low: 'roughly '
-  };
-
-  if (savingsPercentage >= 70) {
-    return `${confidenceText[confidence]}${savingsPercentage}% smaller - dramatic size reduction!`;
-  } else if (savingsPercentage >= 50) {
-    return `${confidenceText[confidence]}${savingsPercentage}% smaller - excellent compression`;
-  } else if (savingsPercentage >= 30) {
-    return `${confidenceText[confidence]}${savingsPercentage}% smaller - good space saving`;
-  } else if (savingsPercentage >= 10) {
-    return `${confidenceText[confidence]}${savingsPercentage}% smaller - modest reduction`;
-  } else {
-    return `${confidenceText[confidence]}${savingsPercentage}% smaller - minimal compression`;
-  }
+export function getSavingsDescriptionForEstimation(estimation: SizeEstimation): string {
+  return getSavingsDescription(estimation.savingsPercentage, estimation.confidence);
 }
+
+// Re-export formatBytes for backward compatibility
+export { formatBytes };

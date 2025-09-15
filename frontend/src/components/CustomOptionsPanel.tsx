@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { CustomOptimization, ProcessorsResponse } from '../types';
 import { SimpleTooltip } from './SimpleTooltip';
+import type { CustomOptimization, ProcessorsResponse } from '../types';
 
 interface CustomOptionsPanelProps {
   customOptimization: CustomOptimization & { quality?: number };
@@ -91,11 +91,7 @@ export function CustomOptionsPanel({ customOptimization, onUpdate, processors }:
 
       {/* Quality Control */}
       <div className="space-y-3">
-        <SimpleTooltip
-          title="Quality Level Control"
-          content="Adjust the compression quality. Higher values preserve more detail but create larger files. Lower values create smaller files with some quality loss."
-          position="right"
-        >
+        <SimpleTooltip content="Adjust the compression quality. Higher values preserve more detail but create larger files. Lower values create smaller files with some quality loss." title="Quality Level Control">
           <label className="text-sm font-medium text-primary cursor-help">
             Quality Level
           </label>

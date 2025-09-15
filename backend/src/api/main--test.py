@@ -18,22 +18,22 @@ class TestMainAPI:
         assert data["service"] == "PixelPrep API"
         assert data["version"] == "0.1.0"
 
-    def test_presets_endpoint(self):
-        """Test presets endpoint returns available presets."""
-        response = client.get("/presets")
+    def test_processors_endpoint(self):
+        """Test processors endpoint returns available processors."""
+        response = client.get("/optimize/processors")
 
         assert response.status_code == 200
         data = response.json()
-        assert "presets" in data
+        assert "processors" in data
         assert "total_count" in data
         assert data["total_count"] > 0
 
-        # Check Instagram square preset is available
-        assert "instagram_square" in data["presets"]
-        instagram_preset = data["presets"]["instagram_square"]
-        assert instagram_preset["name"] == "Instagram Square"
-        assert instagram_preset["dimensions"] == "1080×1080px"
-        assert instagram_preset["format"] == "JPEG"
+        # Check Instagram square processor is available
+        assert "instagram_square" in data["processors"]
+        instagram_processor = data["processors"]["instagram_square"]
+        assert instagram_processor["name"] == "Instagram Square"
+        assert instagram_processor["dimensions"] == "1080×1080px"
+        assert instagram_processor["format"] == "JPEG"
 
     def test_root_endpoint_not_found(self):
         """Test that root endpoint returns 404."""
@@ -62,7 +62,7 @@ class TestMainAPI:
         """Test custom exception handling."""
         # This test verifies that exceptions are handled gracefully
         # We'll test specific error cases in the optimize module tests
-        response = client.get("/presets")
+        response = client.get("/optimize/processors")
         assert response.status_code == 200
 
         # If there were an error, it should return proper JSON error format

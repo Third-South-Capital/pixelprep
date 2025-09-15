@@ -1,69 +1,143 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-interface SimpleTooltipProps {
+interface TooltipProps {
   content: string;
   title?: string;
-  position?: 'top' | 'bottom' | 'left' | 'right';
   children: React.ReactNode;
   className?: string;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  delay?: number;
 }
 
 export function SimpleTooltip({
   content,
   title,
-  position = 'top',
   children,
-  className = ''
-}: SimpleTooltipProps) {
+  className = '',
+  position = 'top',
+  delay = 200
+}: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMouseEnter = () => {
-    setIsVisible(true);
+  const tooltipText = title ? `${title}: ${content}` : content;
+
+  const updateTooltipPosition = () => {
+    if (!containerRef.current || !tooltipRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const spacing = 8;
+
+    let top = 0;
+    let left = 0;
+
+    switch (position) {
+      case 'top':
+        top = containerRect.top - tooltipRect.height - spacing;
+        left = containerRect.left + (containerRect.width - tooltipRect.width) / 2;
+        break;
+      case 'bottom':
+        top = containerRect.bottom + spacing;
+        left = containerRect.left + (containerRect.width - tooltipRect.width) / 2;
+        break;
+      case 'left':
+        top = containerRect.top + (containerRect.height - tooltipRect.height) / 2;
+        left = containerRect.left - tooltipRect.width - spacing;
+        break;
+      case 'right':
+        top = containerRect.top + (containerRect.height - tooltipRect.height) / 2;
+        left = containerRect.right + spacing;
+        break;
+    }
+
+    // Keep tooltip within viewport
+    const viewportPadding = 8;
+    if (left < viewportPadding) {
+      left = viewportPadding;
+    } else if (left + tooltipRect.width > window.innerWidth - viewportPadding) {
+      left = window.innerWidth - tooltipRect.width - viewportPadding;
+    }
+
+    if (top < viewportPadding) {
+      top = viewportPadding;
+    } else if (top + tooltipRect.height > window.innerHeight - viewportPadding) {
+      top = window.innerHeight - tooltipRect.height - viewportPadding;
+    }
+
+    setTooltipStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      zIndex: 9999,
+    });
   };
 
-  const handleMouseLeave = () => {
+  const showTooltip = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(true);
+    }, delay);
+  };
+
+  const hideTooltip = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     setIsVisible(false);
   };
 
-  const positionClasses = {
-    top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 transform -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 transform -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 transform -translate-y-1/2 ml-2'
-  };
+  useEffect(() => {
+    if (isVisible) {
+      updateTooltipPosition();
+    }
+  }, [isVisible, position]);
 
-  const arrowClasses = {
-    top: 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-900',
-    bottom: 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-900',
-    left: 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-900',
-    right: 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-900'
-  };
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className={`relative ${className}`}>
+    <>
       <div
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
+        ref={containerRef}
+        className={`cursor-help ${className}`}
+        onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
+        onFocus={showTooltip}
+        onBlur={hideTooltip}
       >
         {children}
       </div>
 
       {isVisible && (
         <div
-          className={`absolute z-50 ${positionClasses[position]} transition-opacity duration-200 ease-in-out`}
-          style={{ pointerEvents: 'none' }}
+          ref={tooltipRef}
+          style={tooltipStyle}
+          className="bg-gray-900 text-white text-sm rounded-lg px-3 py-2 shadow-lg max-w-xs break-words pointer-events-none opacity-95 transition-opacity duration-200"
         >
-          <div className="bg-gray-900 text-white text-sm rounded-lg px-4 py-3 w-96 shadow-xl border border-gray-700">
-            {title && (
-              <div className="font-semibold mb-2 text-blue-200">{title}</div>
-            )}
-            <div className="leading-relaxed">{content}</div>
-          </div>
+          {tooltipText}
+
           {/* Arrow */}
-          <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`}></div>
+          <div
+            className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${
+              position === 'top' ? 'bottom-[-4px] left-1/2 -translate-x-1/2' :
+              position === 'bottom' ? 'top-[-4px] left-1/2 -translate-x-1/2' :
+              position === 'left' ? 'right-[-4px] top-1/2 -translate-y-1/2' :
+              'left-[-4px] top-1/2 -translate-y-1/2'
+            }`}
+          />
         </div>
       )}
-    </div>
+    </>
   );
 }

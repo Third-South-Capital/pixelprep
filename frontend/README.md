@@ -30,9 +30,9 @@ PixelPrep implements the EntryThingy design language for professional, consisten
 
 ## 🛠️ Tech Stack
 
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite with hot module replacement
-- **Styling**: TailwindCSS v3 with custom CSS variables
+- **Framework**: React 19.1.1 with TypeScript 5.8.3
+- **Build Tool**: Vite 7.1.2 with hot module replacement
+- **Styling**: TailwindCSS v3.4.0 with custom CSS variables
 - **State Management**: React hooks + Context API
 - **HTTP Client**: Fetch API with retry logic
 - **Authentication**: GitHub OAuth + JWT tokens
@@ -65,14 +65,14 @@ frontend/src/
 ## 🚀 Development
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Backend server running on localhost:8000
+- Node.js 18+ and npm (package-lock.json indicates npm is used)
+- Backend server running on localhost:8000 (via `just dev` in project root)
 
 ### Setup
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev    # Starts on http://localhost:5173
 ```
 
 ### Available Scripts
@@ -81,13 +81,13 @@ npm run dev         # Start development server
 npm run build       # Production build
 npm run lint        # ESLint code checking
 npm run preview     # Preview production build
-npm run type-check  # TypeScript validation
+# TypeScript validation is handled by 'npm run build' command
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
-Create `.env.local` for local development:
+Create `.env` for local development (see existing `.env` in frontend directory):
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_SUPABASE_URL=your_supabase_url
@@ -151,11 +151,12 @@ The interface adapts to all screen sizes:
 npm run build
 ```
 
-### GitHub Pages Deployment
-The frontend automatically deploys to GitHub Pages via GitHub Actions:
-- **URL**: https://third-south-capital.github.io/pixelprep/
-- **Trigger**: Push to main branch
-- **Build**: Vite static build with asset optimization
+### Production Deployment
+The frontend is configured for static deployment:
+- **URL**: *Not yet deployed - in development*
+- **Build**: `npm run build` creates static files in `dist/`
+- **Preview**: `npm run preview` to test production build locally
+- **Deployment**: Ready for GitHub Pages, Netlify, Vercel, or any static host
 
 ## 🧪 Development Tools
 

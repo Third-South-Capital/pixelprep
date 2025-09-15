@@ -74,29 +74,6 @@ async def health_check():
     return {"status": "healthy", "service": "PixelPrep API", "version": "0.1.0"}
 
 
-@app.get("/presets")
-async def get_presets():
-    """Get available image optimization presets."""
-    from ..processors.compress import QuickCompressProcessor
-    from ..processors.email import EmailNewsletterProcessor
-    from ..processors.instagram import InstagramSquareProcessor
-    from ..processors.jury import JurySubmissionProcessor
-    from ..processors.web import WebDisplayProcessor
-
-    # Initialize available processors
-    processors = {
-        "instagram_square": InstagramSquareProcessor(),
-        "jury_submission": JurySubmissionProcessor(),
-        "web_display": WebDisplayProcessor(),
-        "email_newsletter": EmailNewsletterProcessor(),
-        "quick_compress": QuickCompressProcessor(),
-    }
-
-    presets = {}
-    for preset_id, processor in processors.items():
-        presets[preset_id] = processor.get_preset_config()
-
-    return {"presets": presets, "total_count": len(presets)}
 
 
 @app.exception_handler(HTTPException)

@@ -1,8 +1,8 @@
 # PixelPrep - Professional Image Optimization for Artists
 
 [![Production Status](https://img.shields.io/badge/status-production-success)](https://third-south-capital.github.io/pixelprep/)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/Third-South-Capital/pixelprep/releases/tag/v2.0.0)
-[![Backend API](https://img.shields.io/badge/API-live-success)](https://pixelprep.onrender.com/health)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](#)
+[![Backend API](https://img.shields.io/badge/API-development-orange)](#)
 [![Design System](https://img.shields.io/badge/UI-EntryThingy-purple)](https://entrythingy.com)
 
 > **🎨 Transform your artwork for any platform with professional optimization presets designed specifically for artists.**
@@ -11,8 +11,8 @@
 
 ## 🚀 Live Application
 
-**🌐 Frontend**: [https://third-south-capital.github.io/pixelprep/](https://third-south-capital.github.io/pixelprep/)
-**🔧 Backend API**: [https://pixelprep.onrender.com/](https://pixelprep.onrender.com/)
+**🌐 Frontend**: *In Development* - Static React build
+**🔧 Backend API**: *In Development* - FastAPI server (localhost:8000)
 
 ## Features
 
@@ -74,20 +74,26 @@ curl -X POST "http://localhost:8000/optimize/" \
 
 ## API Endpoints
 
-### Core Processing
-- `POST /optimize/` - Process image with preset
-- `GET /optimize/processors` - List available presets
+### System Health
+- `GET /health` - API health check
 
-### Authentication  
+### Core Processing
+- `POST /optimize/` - Process image with preset (supports `format=image|zip` query parameter)
+- `GET /optimize/processors` - List available optimization presets
+
+### Authentication
 - `GET /auth/github/login` - Start GitHub OAuth flow
+- `GET /auth/github/callback` - Handle GitHub OAuth callback
 - `GET /auth/me` - Get current user info
+- `POST /auth/logout` - Logout current user
 - `GET /auth/health` - Auth service status
+- `GET /auth/protected` - Test protected endpoint
 
 ### User Management (Protected)
 - `GET /optimize/images` - User's image gallery
-- `GET /optimize/images/{id}/optimizations` - Optimization history
-- `DELETE /optimize/images/{id}` - Delete image
-- `GET /optimize/usage` - Storage usage stats
+- `GET /optimize/images/{image_id}/optimizations` - Optimization history for specific image
+- `DELETE /optimize/images/{image_id}` - Delete specific image
+- `GET /optimize/usage` - Storage usage statistics
 
 ## Development Commands
 
@@ -103,14 +109,14 @@ just check-env   # Verify environment configuration
 
 ### Tech Stack
 - **Backend**: Python 3.11, FastAPI, Pillow (PIL), uvicorn
-- **Frontend**: React 19, TypeScript, TailwindCSS v3, Vite
+- **Frontend**: React 19.1.1, TypeScript, TailwindCSS v3.4, Vite 7.1.2
 - **Design System**: EntryThingy UI with Outfit font, CSS variables, dark/light modes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **Storage**: Supabase Storage + Memory-based temporary storage
 - **Auth**: GitHub OAuth + JWT tokens (HS256, 30-min expiry)
 - **Testing**: pytest (60+ tests), colocated test files
 - **Tooling**: uv, ruff, eslint, justfile
-- **Deployment**: Render.com (backend), GitHub Pages (frontend)
+- **Deployment**: Development only (not yet deployed to production)
 
 ### Project Structure
 ```
@@ -139,7 +145,7 @@ pixelprep/
 - GitHub OAuth app
 - Environment configuration
 
-See [PHASE2_SETUP.md](./PHASE2_SETUP.md) for detailed setup instructions.
+See [PHASE2_SETUP.md](./docs/PHASE2_SETUP.md) for detailed setup instructions.
 
 ## Testing
 
@@ -159,7 +165,7 @@ just test
 uv run pytest backend/src/processors/instagram--test.py -v
 
 # Run production validation
-python phase2_validation.py
+python scripts/phase2_validation.py
 ```
 
 ## Security
@@ -181,26 +187,26 @@ python phase2_validation.py
 ## Development Status
 
 - ✅ **Phase 1**: Core image optimization (5 presets, 60+ tests) - *COMPLETED*
-- ✅ **Phase 2**: Authentication, persistent storage, user management (100% validation) - *COMPLETED*
-- ✅ **Phase 3**: React frontend, professional UI/UX, production deployment - *COMPLETED*
-- 🚀 **Current**: Live production system with dual-mode operation
-- 📋 **Phase 4**: Premium features, batch processing, analytics
+- ✅ **Phase 2**: Authentication, persistent storage, user management - *COMPLETED*
+- ✅ **Phase 3**: React frontend, professional UI/UX - *COMPLETED*
+- 🚧 **Current**: Development system ready for deployment
+- 📋 **Next**: Production deployment, monitoring, analytics
 
-### Production Ready v1.0.0 ✅
-**🌐 Frontend**: React 19 + TypeScript → GitHub Pages (live)  
-**⚙️ Backend**: FastAPI + Python 3.11 → Render.com (live)  
-**🗄️ Database**: Supabase PostgreSQL with RLS (configured)  
-**🔐 Authentication**: GitHub OAuth + JWT (fully functional)  
-**🎨 UI/UX**: Professional TailwindCSS interface (polished)  
-**📊 Status**: **LIVE and serving users** at https://third-south-capital.github.io/pixelprep/
+### Development Ready v0.1.0 ✅
+**🌐 Frontend**: React 19.1.1 + TypeScript → Vite dev server
+**⚙️ Backend**: FastAPI + Python 3.11 → uvicorn dev server
+**🗄️ Database**: Supabase PostgreSQL with RLS (configured)
+**🔐 Authentication**: GitHub OAuth + JWT (fully functional)
+**🎨 UI/UX**: Professional TailwindCSS interface (polished)
+**📊 Status**: **Development complete**, ready for production deployment
 
-### Key Features in Production
+### Key Features in Development
 - **Anonymous Processing**: Instant upload → optimize → download
-- **Authenticated Users**: Persistent gallery + optimization history 
+- **Authenticated Users**: Persistent gallery + optimization history
 - **5 Professional Presets**: Instagram, Jury, Web, Email, Compression
 - **Dual Storage Architecture**: Memory-based + Supabase persistence
 - **GitHub OAuth**: Secure authentication with JWT tokens
-- **CORS Configured**: Production + development domains
+- **CORS Configured**: Development domains (localhost:3000, localhost:5173)
 
 ## Contributing
 

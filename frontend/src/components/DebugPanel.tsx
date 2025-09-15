@@ -153,7 +153,8 @@ export function DebugPanel({ processors, apiCallStatus, apiError, showDebug = tr
                 </button>
                 <button
                   onClick={() => {
-                    fetch('https://pixelprep.onrender.com/optimize/processors')
+                    const apiUrl = import.meta.env.PROD ? 'https://pixelprep.onrender.com' : 'http://localhost:8000';
+                    fetch(`${apiUrl}/optimize/processors`)
                       .then(r => r.json())
                       .then(data => {
                         console.log('🔍 Direct API test:', data);

@@ -1,8 +1,5 @@
 /* App-specific styles that complement the EntryThingy design system */
 
-.card {
-  padding: 2rem;
-}
 
 /* Ensure proper font antialiasing across the app */
 * {

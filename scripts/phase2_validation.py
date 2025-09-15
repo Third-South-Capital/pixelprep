@@ -121,12 +121,12 @@ class Phase2Validator:
         except Exception as e:
             self.log_test("Anonymous Image Upload", False, str(e))
 
-        # Test presets endpoint
+        # Test processors endpoint
         try:
-            response = requests.get(f"{BASE_URL}/presets", timeout=5)
-            self.log_test("Presets Endpoint", response.status_code == 200)
+            response = requests.get(f"{BASE_URL}/optimize/processors", timeout=5)
+            self.log_test("Processors Endpoint", response.status_code == 200)
         except Exception as e:
-            self.log_test("Presets Endpoint", False, str(e))
+            self.log_test("Processors Endpoint", False, str(e))
 
     def test_authentication_protection(self):
         """Test that protected endpoints require authentication"""

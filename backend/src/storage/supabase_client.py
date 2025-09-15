@@ -54,7 +54,6 @@ class SupabaseClient:
 
         try:
             self._client = create_client(supabase_url, supabase_service_key)
-            print(f"✅ Supabase client initialized for {supabase_url}")
         except Exception as e:
             raise ConnectionError(f"Failed to initialize Supabase client: {e}")
 

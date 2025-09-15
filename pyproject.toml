@@ -50,10 +50,18 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.pytest.ini_options]
-testpaths = ["backend"]
-python_files = ["*--test.py"]
-addopts = "-v"
+testpaths = ["backend", "scripts"]
+python_files = ["*--test.py", "*_test.py", "test_*.py"]
+addopts = "-v --tb=short --strict-markers --disable-warnings"
 asyncio_mode = "auto"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow-running tests",
+    "auth: Authentication-related tests",
+    "api: API endpoint tests",
+    "processor: Image processor tests"
+]
 
 [dependency-groups]
 dev = [

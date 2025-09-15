@@ -4,7 +4,7 @@ import { ProcessingStatus } from './components/ProcessingStatus';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { LoginPrompt } from './components/LoginPrompt';
 import { UserHeader } from './components/UserHeader';
-import { DarkModeToggle } from './components/DarkModeToggle';
+// import { DarkModeToggle } from './components/DarkModeToggle'; // Temporarily disabled
 import { ProgressIndicator } from './components/ProgressIndicator';
 import { DebugPanel } from './components/DebugPanel';
 import { UnifiedWorkflow } from './components/UnifiedWorkflow';
@@ -43,7 +43,6 @@ function App() {
     if (autoProcessTimer) {
       clearTimeout(autoProcessTimer);
       setAutoProcessTimer(null);
-      console.log('🚫 [APP] Auto-processing cancelled (tour skipped)');
     }
   };
 
@@ -70,34 +69,23 @@ function App() {
     const initializeApp = async () => {
       try {
         // Check auth configuration first
-        console.log('🔍 [APP] Checking auth configuration...');
         const authConfig = await configService.getAuthConfig();
         setAuthRequired(authConfig.auth_required);
         setAuthEnabled(authConfig.auth_enabled);
-        console.log('🔍 [APP] Auth config:', {
-          required: authConfig.auth_required,
-          enabled: authConfig.auth_enabled,
-          mode: authConfig.mode
-        });
 
         // First, check if this is an OAuth callback (only if auth is enabled)
         if (authConfig.auth_enabled && authService.hasAuthCallback()) {
-          console.log('🔍 [APP] OAuth callback detected, processing...');
           await authService.handleAuthCallback();
         }
 
         // Load processors
-        console.log('🔍 [APP] Loading processors from API...');
         setApiCallStatus('loading');
         try {
           const processorsData = await apiService.getProcessors();
-          console.log('🔍 [APP] Processors loaded successfully:', processorsData);
-          console.log('🔍 [APP] Custom presets enabled in response:', processorsData?.custom_presets_enabled);
           setProcessors(processorsData);
           setApiCallStatus('success');
           setApiError(undefined);
         } catch (error) {
-          console.error('🚨 [APP] Failed to load processors:', error);
           setApiCallStatus('error');
           setApiError(error instanceof Error ? error.message : 'Unknown error');
         }
@@ -105,19 +93,16 @@ function App() {
         // Set up Supabase auth state listener (only if auth is enabled)
         if (authConfig.auth_enabled) {
           unsubscribe = authService.onAuthStateChange((user) => {
-            console.log('🔍 [AUTH STATE] User changed:', user?.email || 'anonymous');
             setUser(user);
 
             // If user signed out, reload usage count (only if auth is required)
             if (!user && authConfig.auth_required) {
               const currentUsage = storageService.getUsageCount();
               setUsageCount(currentUsage);
-              console.log('🔍 [DEBUG] User signed out, usage count:', currentUsage);
             } else if (user) {
               // User signed in, close any login prompts and reset usage count
               setShowLoginPrompt(false);
               setUsageCount(0);
-              console.log('🔍 [DEBUG] User signed in, closing prompts');
             }
           });
         }
@@ -126,14 +111,10 @@ function App() {
         if (authConfig.auth_required && authConfig.auth_enabled && !authService.isAuthenticated()) {
           const currentUsage = storageService.getUsageCount();
           setUsageCount(currentUsage);
-          console.log('🔍 [DEBUG] Initial usage count:', currentUsage);
-        } else {
-          console.log('🔍 [DEBUG] Auth not required or user authenticated - no usage tracking');
         }
 
         setIsInitializing(false);
       } catch (error) {
-        console.error('App initialization failed:', error);
         setIsInitializing(false);
       }
     };
@@ -192,12 +173,6 @@ function App() {
       const analysis = analyzeImage(dimensions.width, dimensions.height);
       const recommendation = recommendPreset(analysis);
 
-      console.log('🔍 [IMAGE ANALYSIS]', {
-        file: file.name,
-        dimensions: `${dimensions.width}x${dimensions.height}`,
-        analysis,
-        recommendation
-      });
 
       setUploadState(prev => ({
         ...prev,
@@ -206,15 +181,12 @@ function App() {
         preset: recommendation.preset // Auto-select recommended preset
       }));
     } catch (error) {
-      console.warn('Failed to analyze image dimensions:', error);
       // Don't block the flow, just skip auto-selection
     }
   };
 
 
-  const handlePresetSelect = (preset: PresetName, shouldAutoProcess: boolean = false) => {
-    console.log('🎯 [PRESET SELECT] Called with:', { preset, shouldAutoProcess });
-
+  const handlePresetSelect = (preset: PresetName) => {
     setUploadState(prev => ({
       ...prev,
       preset,
@@ -227,12 +199,10 @@ function App() {
     if (autoProcessTimer) {
       clearTimeout(autoProcessTimer);
       setAutoProcessTimer(null);
-      console.log('🎯 [PRESET SELECT] Cleared existing auto-process timer');
     }
 
     // AUTO-PROCESSING DISABLED: Users must explicitly click "Optimize Image" button
     // This ensures full user control over when image processing starts
-    console.log('🎯 [PRESET SELECT] Auto-processing disabled - user must click optimize button');
   };
 
   const handleUpload = async () => {
@@ -286,21 +256,13 @@ function App() {
       if (authRequired && authEnabled && !authService.isAuthenticated()) {
         const newUsageCount = storageService.incrementUsage();
         setUsageCount(newUsageCount);
-        console.log('🔍 [DEBUG] Incremented usage count to:', newUsageCount);
-        console.log('🔍 [DEBUG] localStorage content:', localStorage.getItem('pixelprep_usage'));
 
         // Show login prompt after first optimization
         if (newUsageCount === 1) {
-          console.log('🔍 [DEBUG] First optimization completed - will show login prompt in 2 seconds');
           setTimeout(() => {
-            console.log('🔍 [DEBUG] Showing login prompt now');
             setShowLoginPrompt(true);
           }, 2000); // Show prompt 2 seconds after successful optimization
-        } else {
-          console.log('🔍 [DEBUG] Usage count is', newUsageCount);
         }
-      } else {
-        console.log('🔍 [DEBUG] Auth not required or user authenticated - no usage tracking needed');
       }
     } catch (error) {
       setUploadState(prev => ({
@@ -364,14 +326,6 @@ function App() {
   // Only apply usage limits when auth is required; otherwise allow unlimited access
   const hasExceededFreeLimit = authRequired && !user && usageCount >= 1;
 
-  // Debug logging for state changes
-  console.log('🔍 [DEBUG] Current state:', {
-    user: !!user,
-    usageCount,
-    hasExceededFreeLimit,
-    showLoginPrompt,
-    isAuthenticated: authService.isAuthenticated()
-  });
 
   // Show initialization loading screen
   if (isInitializing) {
@@ -395,7 +349,8 @@ function App() {
       <div className="py-16 mx-auto max-w-5xl px-4">
         {/* Header with user info and dark mode toggle */}
         <div className="flex justify-between items-center mb-6">
-          <DarkModeToggle />
+          {/* DarkModeToggle temporarily disabled for styling optimization */}
+          {/* <DarkModeToggle /> */}
           <div className="flex-1"></div>
           {authEnabled && user && <UserHeader user={user} onLogout={handleLogout} />}
         </div>
@@ -467,11 +422,7 @@ function App() {
               {/* Upload Zone - Only show when no file is selected */}
               {!uploadState.file && (
                 <div className="w-full max-w-4xl">
-                  <SimpleTooltip
-                    title="Upload Your Artwork"
-                    content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
-                    position="bottom"
-                  >
+                  <SimpleTooltip content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure." title="Upload Your Artwork">
                     <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
                       <UploadZone
                         onFileSelect={handleFileSelect}
@@ -526,13 +477,15 @@ function App() {
         />
       )}
 
-      {/* Debug Panel - Show in both dev and production for debugging custom presets issue */}
-      <DebugPanel
-        processors={processors}
-        apiCallStatus={apiCallStatus}
-        apiError={apiError}
-        showDebug={true} // Always show for now to debug production issue
-      />
+      {/* Debug Panel - Only show in development */}
+      {import.meta.env.DEV && (
+        <DebugPanel
+          processors={processors}
+          apiCallStatus={apiCallStatus}
+          apiError={apiError}
+          showDebug={true}
+        />
+      )}
     </div>
   );
 }

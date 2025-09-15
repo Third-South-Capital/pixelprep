@@ -1,5 +1,14 @@
-import { estimateFileSize, formatBytes, getSavingsDescription } from '../utils/sizeEstimation';
+import { estimateFileSize, getSavingsDescriptionForEstimation } from '../utils/sizeEstimation';
 import type { PresetName } from '../types';
+
+// Simple utility to format file sizes
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
 
 interface SizePreviewProps {
   originalFile: File;
@@ -88,7 +97,7 @@ export function SizePreview({ originalFile, preset, dimensions, className = '' }
 
               <div className="text-center">
                 <p className="text-sm font-medium text-green-700">
-                  {getSavingsDescription(estimation)}
+                  {getSavingsDescriptionForEstimation(estimation)}
                 </p>
               </div>
             </div>

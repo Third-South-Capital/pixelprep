@@ -2,6 +2,7 @@
 Authentication endpoints for PixelPrep using Supabase Auth and GitHub OAuth.
 """
 
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
@@ -17,6 +18,9 @@ from ..storage.supabase_client import get_supabase_client
 
 # Router for auth endpoints
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+# Logger
+logger = logging.getLogger(__name__)
 
 # Security scheme
 security = HTTPBearer()
@@ -73,19 +77,8 @@ AUTH_ENABLED = False
 try:
     validate_auth_environment()
     AUTH_ENABLED = True
-except ValueError as e:
-    print(f"⚠️  AUTH WARNING: {e}")
+except ValueError:
     AUTH_ENABLED = False
-
-# Auth Status Summary
-if AUTH_REQUIRED and not AUTH_ENABLED:
-    print(f"🚨 AUTH ERROR: AUTH_REQUIRED=true but authentication is not properly configured!")
-elif AUTH_REQUIRED and AUTH_ENABLED:
-    print(f"🔐 AUTH MODE: Authentication required and properly configured")
-elif not AUTH_REQUIRED and AUTH_ENABLED:
-    print(f"🔓 MIXED MODE: Authentication available but not required (optional)")
-else:
-    print(f"🚪 ANONYMOUS MODE: Authentication disabled, anonymous access only")
 
 
 # Pydantic Models
@@ -151,13 +144,11 @@ def verify_supabase_token(
         if user_id is None:
             raise credentials_exception
 
-        print(f"🔍 [SUPABASE JWT] Verified token for user: {email} (ID: {user_id})")
 
         token_data = TokenData(user_id=user_id, email=email)
         return token_data
 
     except JWTError as e:
-        print(f"🔍 [SUPABASE JWT] Token verification failed: {str(e)}")
         raise credentials_exception
 
 # Legacy custom token verification (kept for compatibility)
@@ -225,12 +216,10 @@ def verify_optional_supabase_token(
 
     # If auth is disabled (no Supabase secrets), skip verification
     if not AUTH_ENABLED:
-        print("🔍 [SUPABASE JWT OPTIONAL] Auth disabled, skipping token verification")
         return None
 
     # If no JWT secret configured, can't verify tokens
     if not SUPABASE_JWT_SECRET:
-        print("🔍 [SUPABASE JWT OPTIONAL] No JWT secret configured, skipping verification")
         return None
 
     try:
@@ -247,12 +236,10 @@ def verify_optional_supabase_token(
         if user_id is None:
             return None
 
-        print(f"🔍 [SUPABASE JWT OPTIONAL] Verified token for user: {email}")
 
         return TokenData(user_id=user_id, email=email)
 
     except JWTError as e:
-        print(f"🔍 [SUPABASE JWT OPTIONAL] Token verification failed: {str(e)}")
         return None
 
 # Legacy optional token verification
@@ -337,9 +324,6 @@ async def github_login(request: Request):
     redirect_uri = f"{BACKEND_URL}/auth/github/callback"
 
     # Debug logging
-    print(f"🔍 [OAUTH DEBUG] BACKEND_URL: {BACKEND_URL}")
-    print(f"🔍 [OAUTH DEBUG] redirect_uri: {redirect_uri}")
-    print(f"🔍 [OAUTH DEBUG] GITHUB_CLIENT_ID: {GITHUB_CLIENT_ID}")
 
     github_oauth_url = (
         f"https://github.com/login/oauth/authorize?"
@@ -349,7 +333,6 @@ async def github_login(request: Request):
         f"state={state}"
     )
 
-    print(f"🔍 [OAUTH DEBUG] Generated OAuth URL: {github_oauth_url}")
 
     return {"auth_url": github_oauth_url, "state": state}
 
@@ -429,10 +412,8 @@ async def github_callback(request: Request, code: str, state: str = None):
                 }
             )
             user_id = auth_response.user.id
-            print(f"User signed in: {user_id}")
 
         except Exception as signin_error:
-            print(f"Sign in failed, creating new user: {signin_error}")
 
             # User doesn't exist, create via Auth
             try:
@@ -451,7 +432,6 @@ async def github_callback(request: Request, code: str, state: str = None):
                     }
                 )
                 user_id = auth_response.user.id
-                print(f"New user created: {user_id}")
 
                 # Create corresponding profile record (since no auto-trigger exists)
                 try:
@@ -466,16 +446,12 @@ async def github_callback(request: Request, code: str, state: str = None):
                     profile_result = (
                         supabase.table("profiles").insert(profile_data).execute()
                     )
-                    print(
-                        f"Profile created: {profile_result.data[0]['id'] if profile_result.data else 'unknown'}"
-                    )
 
                 except Exception as profile_error:
-                    print(f"Profile creation failed: {profile_error}")
                     # Don't fail the entire auth flow - user is created in auth system
+                    logger.warning(f"Failed to create profile for user {user_id}: {profile_error}")
 
             except Exception as signup_error:
-                print(f"Signup failed: {signup_error}")
                 raise HTTPException(
                     status_code=500,
                     detail=f"Failed to create user account: {str(signup_error)}",
@@ -487,7 +463,6 @@ async def github_callback(request: Request, code: str, state: str = None):
                 supabase.table("profiles").select("*").eq("id", str(user_id)).execute()
             )
             if not existing_profile.data:
-                print(f"Creating missing profile for existing user: {user_id}")
                 profile_data = {
                     "id": str(user_id),
                     "email": primary_email,
@@ -495,9 +470,8 @@ async def github_callback(request: Request, code: str, state: str = None):
                     "avatar_url": github_user.get("avatar_url"),
                 }
                 supabase.table("profiles").insert(profile_data).execute()
-                print("Profile created for existing user")
         except Exception as e:
-            print(f"Profile check/creation failed: {e}")
+            logger.warning(f"Failed to update profile for existing user {user_id}: {e}")
 
         # Create JWT token
         access_token = create_access_token(
@@ -564,7 +538,7 @@ async def auth_health():
 async def protected_route(current_user: User = Depends(get_current_user)):
     """Example protected route that requires authentication."""
     return {
-        "message": f"Hello {current_user.name}!",
+        "message": f"Hello {current_user.display_name}!",
         "user_id": current_user.id,
-        "is_premium": current_user.is_premium,
+        "subscription_tier": current_user.subscription_tier,
     }

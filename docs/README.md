@@ -42,7 +42,7 @@ Historical documentation from each development phase of the project.
 
 - **Main Project Documentation**: [../CLAUDE.md](../CLAUDE.md)
 - **Project README**: [../README.md](../README.md)
-- **Latest Deployment Guide**: [releases/v2.1.0/DEPLOYMENT-v2.1.0.md](releases/v2.1.0/DEPLOYMENT-v2.1.0.md)
+- **Latest Deployment Guide**: [deployment/PRODUCTION_ENV_SETUP.md](deployment/PRODUCTION_ENV_SETUP.md)
 - **Authentication System**: [architecture/AUTHENTICATION.md](architecture/AUTHENTICATION.md)
 - **Design System**: [architecture/DESIGN_SYSTEM.md](architecture/DESIGN_SYSTEM.md)
 

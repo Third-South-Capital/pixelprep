@@ -7,9 +7,9 @@ This directory contains all configuration files for the PixelPrep project.
 ```
 config/
 ├── environments/           # Environment-specific configurations
-│   ├── .env.development    # Development environment (active)
+│   ├── .env.development    # Development environment settings
 │   ├── .env.example        # Example configuration with descriptions
-│   └── .env.production.template  # Production configuration template
+│   └── .env.phase1         # Phase 1 minimal configuration
 └── README.md              # This file
 ```
 
@@ -23,18 +23,17 @@ Active development configuration file. This is copied from the root `.env` file 
 ### `.env.example`
 Example configuration file with documentation for all available environment variables. Use this as a template for setting up new environments.
 
-### `.env.production.template`
-Comprehensive production configuration template with:
-- 80+ configuration options
-- Feature flag settings
-- Security configurations
-- Performance tuning parameters
-- Monitoring and observability settings
+### `.env.phase1`
+Minimal configuration for Phase 1 development with:
+- Basic image processing settings
+- No authentication requirements
+- Temporary storage only
+- Development-focused defaults
 
 ## Usage
 
 1. **Development**: Copy `.env.example` to project root as `.env` and customize for your environment
-2. **Production**: Use `.env.production.template` as a guide for production deployments
+2. **Phase 1**: Use `.env.phase1` for minimal setup without authentication
 3. **New Environment**: Start with `.env.example` and customize as needed
 
 ## Security Notes

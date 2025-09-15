@@ -91,42 +91,16 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
     const actualBlobSize = optimizedBlob?.size || 0;
     const optimizedSize = actualBlobSize > 0 ? actualBlobSize : result.metadata.file_size_bytes;
 
-    // Validation: Log file size consistency for debugging
-    console.log(`🔍 File Size Debug (DATA INTEGRITY CHECK):`);
-    console.log(`  • Original: ${originalSize} bytes (${formatFileSize(originalSize)})`);
-    console.log(`  • Optimized (from metadata): ${optimizedSize} bytes (${formatFileSize(optimizedSize)})`);
-    console.log(`  • Actual blob size (DOWNLOAD): ${actualBlobSize} bytes (${formatFileSize(actualBlobSize)})`);
-    console.log(`  • Is ZIP: ${isZip}`);
-    console.log(`  • Preset: ${result.preset}`);
+    // Calculate reduction percentage
+    // const reductionPercent = ((originalSize - optimizedSize) / originalSize * 100).toFixed(1);
 
-    // Data integrity warning
-    if (actualBlobSize !== optimizedSize) {
-      console.error(`❌ DATA INTEGRITY ISSUE: GUI shows ${optimizedSize} bytes but download is ${actualBlobSize} bytes`);
-      console.error(`   Difference: ${actualBlobSize - optimizedSize} bytes`);
-      console.error(`   This breaks user trust - they see one size but download another!`);
-    } else {
-      console.log(`✅ DATA INTEGRITY OK: GUI and download sizes match`);
-    }
-
-    // Calculate reduction percentage for validation
-    const reductionPercent = ((originalSize - optimizedSize) / originalSize * 100).toFixed(1);
-    console.log(`  • Actual reduction: ${reductionPercent}%`);
-
-    // Warn about suspicious sizes but don't override (backend should be authoritative)
-    if (optimizedSize > originalSize * 0.9) {
-      console.warn(`⚠️ Suspicious: Optimized size is >90% of original for ${result.preset} preset`);
-    } else if (optimizedSize > originalSize) {
-      console.warn(`⚠️ Suspicious: Optimized size (${optimizedSize}) > original size (${originalSize})`);
-    }
 
     if (originalSize <= 0 || optimizedSize <= 0) {
-      console.error(`❌ Invalid file sizes: original=${originalSize}, optimized=${optimizedSize}`);
       return null;
     }
 
     // Handle case where optimized file is larger (shouldn't happen but just in case)
     if (optimizedSize >= originalSize) {
-      console.warn(`⚠️ Optimized file is larger than original - showing as increase`);
       return {
         bytes: optimizedSize - originalSize,
         percentage: 0,

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from PIL import Image
+from .optimization_utils import OptimizationUtils
 
 
 class BaseProcessor(ABC):
@@ -69,18 +70,59 @@ class BaseProcessor(ABC):
         """Resize image with high quality resampling."""
         return image.resize((target_width, target_height), Image.Resampling.LANCZOS)
 
-    def get_compression_params(self, quality: int = 95) -> dict[str, Any]:
+    def get_compression_params(self, quality: int = 95, format_type: str = 'JPEG') -> dict[str, Any]:
         """
         Get standardized compression parameters for this processor.
         Each processor can override this to provide format-specific settings.
 
         Args:
-            quality: JPEG quality (1-100)
+            quality: Quality level (1-100)
+            format_type: Output format
 
         Returns:
             Dictionary with PIL Image.save() parameters
         """
-        return {
-            'quality': quality,
-            'optimize': True
-        }
+        return OptimizationUtils.get_standard_compression_params(
+            format_type=format_type,
+            quality=quality
+        )
+
+    def get_image_memory_size(self, image: Image.Image) -> int:
+        """Get approximate memory size of a PIL Image."""
+        return OptimizationUtils.get_image_memory_size(image)
+
+    def optimize_file_size(
+        self,
+        image: Image.Image,
+        max_size_bytes: int,
+        format_type: str = 'JPEG',
+        quality_start: int = 95,
+        quality_min: int = 40,
+        **kwargs
+    ) -> Image.Image:
+        """Optimize image file size using shared utilities."""
+        return OptimizationUtils.optimize_file_size(
+            image=image,
+            max_size_bytes=max_size_bytes,
+            format_type=format_type,
+            quality_start=quality_start,
+            quality_min=quality_min,
+            **kwargs
+        )
+
+    def save_optimized_with_metadata(
+        self,
+        image: Image.Image,
+        output_path: str,
+        max_size_bytes: int,
+        format_type: str = 'JPEG',
+        **kwargs
+    ) -> dict[str, Any]:
+        """Save optimized image with metadata using shared utilities."""
+        return OptimizationUtils.save_optimized_with_metadata(
+            image=image,
+            output_path=output_path,
+            max_size_bytes=max_size_bytes,
+            format_type=format_type,
+            **kwargs
+        )
