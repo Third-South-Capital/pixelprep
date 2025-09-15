@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 from ..processors.instagram import InstagramSquareProcessor
 from ..storage.persistent import PersistentStorage
 from ..storage.temporary import TemporaryStorage
-from .auth import AUTH_REQUIRED, CUSTOM_PRESETS_ENABLED, User, get_current_user, get_current_user_optional
+from .auth import AUTH_REQUIRED, CUSTOM_PRESETS_ENABLED, CUSTOM_DIMENSIONS_ENABLED, User, get_current_user, get_current_user_optional
 
 router = APIRouter(prefix="/optimize", tags=["optimization"])
 
@@ -419,6 +419,7 @@ async def get_available_processors():
         "supported_formats": list(SUPPORTED_FORMATS),
         "max_file_size_mb": MAX_FILE_SIZE_MB,
         "custom_presets_enabled": CUSTOM_PRESETS_ENABLED,
+        "custom_dimensions_enabled": CUSTOM_DIMENSIONS_ENABLED,
     }
 
 

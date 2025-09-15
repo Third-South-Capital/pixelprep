@@ -65,6 +65,9 @@ AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "false").lower() == "true"
 # Custom Presets Feature Flag - Controls whether custom optimization is available
 CUSTOM_PRESETS_ENABLED = os.getenv("CUSTOM_PRESETS_ENABLED", "false").lower() == "true"
 
+# Custom Dimensions Feature Flag - Controls whether custom width/height inputs are available
+CUSTOM_DIMENSIONS_ENABLED = os.getenv("CUSTOM_DIMENSIONS_ENABLED", "false").lower() == "true"
+
 # Validate environment on module import (fail fast)
 AUTH_ENABLED = False
 try:

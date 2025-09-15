@@ -21,6 +21,7 @@ export interface ProcessorsResponse {
   supported_formats: string[];
   max_file_size_mb: number;
   custom_presets_enabled?: boolean;
+  custom_dimensions_enabled?: boolean;
 }
 
 export interface OptimizationMetadata {

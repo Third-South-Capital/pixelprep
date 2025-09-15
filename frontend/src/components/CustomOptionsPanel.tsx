@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import type { CustomOptimization } from '../types';
+import type { CustomOptimization, ProcessorsResponse } from '../types';
 import { SimpleTooltip } from './SimpleTooltip';
 
 interface CustomOptionsPanelProps {
   customOptimization: CustomOptimization & { quality?: number };
   onUpdate: (optimization: CustomOptimization & { quality?: number }) => void;
+  processors?: ProcessorsResponse;
 }
 
-export function CustomOptionsPanel({ customOptimization, onUpdate }: CustomOptionsPanelProps) {
+export function CustomOptionsPanel({ customOptimization, onUpdate, processors }: CustomOptionsPanelProps) {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const handleQualityChange = (quality: number) => {
@@ -149,41 +150,65 @@ export function CustomOptionsPanel({ customOptimization, onUpdate }: CustomOptio
         </div>
       </div>
 
-      {/* Dimensions */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-primary">
-          Image Dimensions
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-secondary mb-1">Width (pixels)</label>
-            <input
-              type="number"
-              placeholder="Original width"
-              value={customOptimization.customWidth || ''}
-              onChange={(e) => handleDimensionChange('customWidth', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="w-full px-3 py-2 text-sm bg-tertiary border border-primary rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-accent-primary"
-              min="50"
-              max="5000"
-            />
+      {/* Dimensions - Only show if custom dimensions are enabled */}
+      {processors?.custom_dimensions_enabled && (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-primary">
+            Image Dimensions
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-secondary mb-1">Width (pixels)</label>
+              <input
+                type="number"
+                placeholder="Original width"
+                value={customOptimization.customWidth || ''}
+                onChange={(e) => handleDimensionChange('customWidth', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 text-sm bg-tertiary border border-primary rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-accent-primary"
+                min="50"
+                max="5000"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-secondary mb-1">Height (pixels)</label>
+              <input
+                type="number"
+                placeholder="Original height"
+                value={customOptimization.customHeight || ''}
+                onChange={(e) => handleDimensionChange('customHeight', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 text-sm bg-tertiary border border-primary rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-accent-primary"
+                min="50"
+                max="5000"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs text-secondary mb-1">Height (pixels)</label>
-            <input
-              type="number"
-              placeholder="Original height"
-              value={customOptimization.customHeight || ''}
-              onChange={(e) => handleDimensionChange('customHeight', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="w-full px-3 py-2 text-sm bg-tertiary border border-primary rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-accent-primary"
-              min="50"
-              max="5000"
-            />
-          </div>
+          <p className="text-xs text-secondary">
+            Leave blank to keep original dimensions. Aspect ratio will be preserved if only one dimension is specified.
+          </p>
         </div>
-        <p className="text-xs text-secondary">
-          Leave blank to keep original dimensions. Aspect ratio will be preserved if only one dimension is specified.
-        </p>
-      </div>
+      )}
+
+      {/* Alternative max dimension dropdown when custom dimensions are disabled */}
+      {!processors?.custom_dimensions_enabled && (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-primary">
+            Maximum Dimension
+          </label>
+          <select
+            value={customOptimization.maxDimension || 'original'}
+            onChange={(e) => onUpdate({ ...customOptimization, maxDimension: e.target.value as any })}
+            className="w-full px-3 py-2 text-sm bg-tertiary border border-primary rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-accent-primary"
+          >
+            <option value="original">Keep original size</option>
+            <option value="800">800px max dimension</option>
+            <option value="1200">1200px max dimension</option>
+            <option value="1920">1920px max dimension</option>
+          </select>
+          <p className="text-xs text-secondary">
+            Images will be resized to fit within the selected maximum dimension while preserving aspect ratio.
+          </p>
+        </div>
+      )}
 
       {/* File Size Target */}
       <div className="space-y-3">
@@ -218,13 +243,16 @@ export function CustomOptionsPanel({ customOptimization, onUpdate }: CustomOptio
           <div>Quality: <span className="font-medium">{customOptimization.quality || 85}%</span></div>
           <div>Format: <span className="font-medium">{customOptimization.format}</span></div>
           <div>Max Size: <span className="font-medium">{customOptimization.maxSizeMb} MB</span></div>
-          {(customOptimization.customWidth || customOptimization.customHeight) && (
+          {processors?.custom_dimensions_enabled && (customOptimization.customWidth || customOptimization.customHeight) && (
             <div>Dimensions: <span className="font-medium">
               {customOptimization.customWidth || 'Original'}×{customOptimization.customHeight || 'Original'}px
             </span></div>
           )}
-          {(!customOptimization.customWidth && !customOptimization.customHeight) && (
+          {processors?.custom_dimensions_enabled && (!customOptimization.customWidth && !customOptimization.customHeight) && (
             <div>Dimensions: <span className="font-medium">Original size preserved</span></div>
+          )}
+          {!processors?.custom_dimensions_enabled && (
+            <div>Max Dimension: <span className="font-medium">{customOptimization.maxDimension || 'Original'}</span></div>
           )}
         </div>
       </div>

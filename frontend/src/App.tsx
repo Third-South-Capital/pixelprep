@@ -471,12 +471,14 @@ function App() {
                   content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
                   position="bottom"
                 >
-                  <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
-                    <UploadZone
-                      onFileSelect={handleFileSelect}
-                      selectedFile={uploadState.file}
-                      error={uploadState.error}
-                    />
+                  <div className="bg-primary rounded-xl shadow-lg border border-primary p-10 flex justify-center items-center">
+                    <div className="w-full max-w-2xl">
+                      <UploadZone
+                        onFileSelect={handleFileSelect}
+                        selectedFile={uploadState.file}
+                        error={uploadState.error}
+                      />
+                    </div>
                   </div>
                 </SimpleTooltip>
               )}

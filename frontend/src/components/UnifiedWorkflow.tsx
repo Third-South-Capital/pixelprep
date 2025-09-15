@@ -96,6 +96,7 @@ export function UnifiedWorkflow({
                 quality: 85
               }}
               onUpdate={onCustomOptimizationUpdate}
+              processors={processors}
             />
           </div>
         )}
@@ -107,15 +108,17 @@ export function UnifiedWorkflow({
             content="See exactly how your file size will change before processing. These estimates are based on your image's characteristics and the selected preset."
             position="top"
           >
-            <div className="mb-8">
-              <SizePreview
-                originalFile={uploadState.file}
-                preset={uploadState.preset}
-                dimensions={uploadState.imageAnalysis ? {
-                  width: uploadState.imageAnalysis.width,
-                  height: uploadState.imageAnalysis.height
-                } : undefined}
-              />
+            <div className="mb-8 flex justify-center">
+              <div className="w-full max-w-2xl">
+                <SizePreview
+                  originalFile={uploadState.file}
+                  preset={uploadState.preset}
+                  dimensions={uploadState.imageAnalysis ? {
+                    width: uploadState.imageAnalysis.width,
+                    height: uploadState.imageAnalysis.height
+                  } : undefined}
+                />
+              </div>
             </div>
           </SimpleTooltip>
         )}
