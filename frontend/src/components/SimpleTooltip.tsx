@@ -54,7 +54,7 @@ export function SimpleTooltip({
           className={`absolute z-50 ${positionClasses[position]} transition-opacity duration-200 ease-in-out`}
           style={{ pointerEvents: 'none' }}
         >
-          <div className="bg-gray-900 text-white text-sm rounded-lg px-4 py-3 max-w-xl shadow-xl border border-gray-700">
+          <div className="bg-gray-900 text-white text-sm rounded-lg px-4 py-3 w-96 shadow-xl border border-gray-700">
             {title && (
               <div className="font-semibold mb-2 text-blue-200">{title}</div>
             )}
