@@ -9,7 +9,7 @@ interface UnifiedWorkflowProps {
   processors: ProcessorsResponse | null;
   onPresetSelect: (preset: PresetName) => void;
   onMetadataToggle: (includeMetadata: boolean) => void;
-  onCustomOptimizationUpdate: (customOptimization: unknown) => void;
+  onCustomOptimizationUpdate: (customOptimization: any) => void;
   onUpload: () => void;
   onReset: () => void;
   hasExceededFreeLimit: boolean;

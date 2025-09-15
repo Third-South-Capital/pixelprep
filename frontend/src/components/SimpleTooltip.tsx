@@ -33,10 +33,10 @@ export function SimpleTooltip({
   };
 
   const arrowClasses = {
-    top: 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-800',
-    bottom: 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-800',
-    left: 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-800',
-    right: 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-800'
+    top: 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-900',
+    bottom: 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-900',
+    left: 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-900',
+    right: 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-900'
   };
 
   return (
@@ -44,18 +44,21 @@ export function SimpleTooltip({
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="cursor-help"
+        className="relative"
       >
         {children}
       </div>
 
       {isVisible && (
-        <div className={`absolute z-50 ${positionClasses[position]}`}>
-          <div className="bg-gray-800 text-white text-sm rounded-lg px-3 py-2 max-w-xs shadow-lg">
+        <div
+          className={`absolute z-50 ${positionClasses[position]} transition-opacity duration-200 ease-in-out`}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="bg-gray-900 text-white text-sm rounded-lg px-4 py-3 max-w-sm shadow-xl border border-gray-700">
             {title && (
-              <div className="font-semibold mb-1">{title}</div>
+              <div className="font-semibold mb-2 text-blue-200">{title}</div>
             )}
-            <div>{content}</div>
+            <div className="leading-relaxed">{content}</div>
           </div>
           {/* Arrow */}
           <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`}></div>

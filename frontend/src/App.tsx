@@ -49,9 +49,9 @@ function App() {
 
   // Expose cancelAutoProcessing globally for tour skip
   useEffect(() => {
-    (window as Record<string, unknown>).cancelAutoProcessing = cancelAutoProcessing;
+    (window as any).cancelAutoProcessing = cancelAutoProcessing;
     return () => {
-      delete (window as Record<string, unknown>).cancelAutoProcessing;
+      delete (window as any).cancelAutoProcessing;
     };
   }, [autoProcessTimer]);
 
@@ -396,6 +396,7 @@ function App() {
         {/* Header with user info and dark mode toggle */}
         <div className="flex justify-between items-center mb-6">
           <DarkModeToggle />
+          <div className="flex-1"></div>
           {authEnabled && user && <UserHeader user={user} onLogout={handleLogout} />}
         </div>
 
@@ -438,7 +439,7 @@ function App() {
           )}
         </div>
 
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           {uploadState.result ? (
             <div data-results>
               {/* Progress Indicator */}

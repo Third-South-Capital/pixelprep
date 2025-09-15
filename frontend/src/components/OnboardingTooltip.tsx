@@ -122,9 +122,9 @@ function skipOnboarding(event?: Event | React.MouseEvent) {
   localStorage.setItem('pixelprep_onboarding_completed', 'true');
 
   // Cancel any pending auto-processing BEFORE notifying listeners
-  if (typeof (window as Record<string, unknown>).cancelAutoProcessing === 'function') {
+  if (typeof (window as any).cancelAutoProcessing === 'function') {
     console.log('[ONBOARDING] Cancelling auto-processing before skip');
-    ((window as Record<string, unknown>).cancelAutoProcessing as () => void)();
+    (window as any).cancelAutoProcessing();
   }
 
   notifyListeners();
