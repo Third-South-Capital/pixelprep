@@ -59,12 +59,13 @@ export type OptimizationStrategy = 'quality' | 'size';
 export type MaxDimension = 'original' | '800' | '1200' | '1920';
 
 export interface CustomOptimization {
-  strategy: OptimizationStrategy;
-  maxDimension: MaxDimension;
+  strategy?: OptimizationStrategy; // Optional, defaults to 'quality' in backend
+  maxDimension?: MaxDimension; // Optional, no longer used with simplified interface
   customWidth?: number;
   customHeight?: number;
   maxSizeMb: number;
   format: string;
+  quality?: number; // 10-100, defaults to 85
 }
 
 export interface ImageAnalysis {

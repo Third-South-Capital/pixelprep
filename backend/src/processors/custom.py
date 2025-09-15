@@ -46,7 +46,8 @@ class CustomProcessor(BaseProcessor):
         max_size_mb: float = 5.0,
         format: str = 'JPEG',
         strategy: Literal['quality', 'size'] = 'quality',
-        max_dimension: Optional[int] = None
+        max_dimension: Optional[int] = None,
+        quality: Optional[int] = None
     ):
         """
         Initialize custom processor with user-defined parameters.
@@ -58,6 +59,7 @@ class CustomProcessor(BaseProcessor):
             format: Output format ('JPEG', 'PNG', 'WebP')
             strategy: 'quality' for best quality, 'size' for smallest files
             max_dimension: Maximum dimension constraint (width or height)
+            quality: Precise quality level (10-100, None for strategy-based auto)
         """
         self.target_width = width
         self.target_height = height
@@ -65,11 +67,24 @@ class CustomProcessor(BaseProcessor):
         self.format = format.upper()
         self.strategy = strategy
         self.max_dimension = max_dimension
+        self.user_quality = quality
 
-        # Apply strategy-based settings
+        # Validate quality parameter
+        if quality is not None:
+            if not (10 <= quality <= 100):
+                raise ValueError("Quality must be between 10 and 100")
+
+        # Apply strategy-based settings or use user-defined quality
         strategy_config = OPTIMIZATION_STRATEGIES[strategy]
-        self.quality_start = strategy_config['quality_start']
-        self.quality_min = strategy_config['quality_min']
+        if quality is not None:
+            # Use user-defined quality as both start and target
+            self.quality_start = quality
+            self.quality_min = max(10, quality - 20)  # Allow some reduction if needed
+        else:
+            # Use strategy-based quality
+            self.quality_start = strategy_config['quality_start']
+            self.quality_min = strategy_config['quality_min']
+
         self.progressive = strategy_config['progressive']
         self.webp_method = strategy_config['method']
 
@@ -467,7 +482,8 @@ def create_custom_processor(
     max_size_mb: float = 5.0,
     format: str = 'JPEG',
     strategy: Literal['quality', 'size'] = 'quality',
-    max_dimension: Optional[int] = None
+    max_dimension: Optional[int] = None,
+    quality: Optional[int] = None
 ) -> CustomProcessor:
     """
     Enhanced factory function to create a custom processor with specified parameters.
@@ -479,6 +495,7 @@ def create_custom_processor(
         format: Output format ('JPEG', 'PNG', 'WebP')
         strategy: 'quality' for best quality, 'size' for smallest files
         max_dimension: Maximum dimension constraint (width or height)
+        quality: Precise quality level (10-100, None for strategy-based auto)
 
     Returns:
         Configured CustomProcessor instance
@@ -492,7 +509,8 @@ def create_custom_processor(
         max_size_mb=max_size_mb,
         format=format,
         strategy=strategy,
-        max_dimension=max_dimension
+        max_dimension=max_dimension,
+        quality=quality
     )
 
 

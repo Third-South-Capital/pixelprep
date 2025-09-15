@@ -49,7 +49,7 @@ async def optimize_image(
     current_user: User | None = Depends(get_current_user_optional),
     # Custom optimization parameters (optional)
     custom_strategy: Literal["quality", "size"] = Form(
-        "quality", description="Custom optimization strategy: 'quality' or 'size'"
+        "quality", description="Custom optimization strategy: 'quality' or 'size' (defaults to 'quality')"
     ),
     custom_max_dimension: int = Form(
         None, description="Maximum dimension constraint (width or height in pixels)"
@@ -58,6 +58,9 @@ async def optimize_image(
     custom_height: int = Form(None, description="Target height in pixels (None for original)"),
     custom_max_size_mb: float = Form(5.0, description="Maximum file size in MB"),
     custom_format: str = Form("JPEG", description="Output format for custom preset"),
+    custom_quality: int = Form(
+        85, description="Precise quality level (10-100, defaults to 85 for good balance)"
+    ),
 ):
     """
     Optimize an uploaded image using the specified preset.
@@ -89,6 +92,7 @@ async def optimize_image(
                     format=custom_format,
                     strategy=custom_strategy,
                     max_dimension=custom_max_dimension,
+                    quality=custom_quality,
                 )
             except ValueError as e:
                 raise HTTPException(

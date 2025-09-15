@@ -67,14 +67,17 @@ class ApiService {
 
     // Add custom parameters if preset is custom
     if (preset === 'custom' && customOptions) {
-      formData.append('custom_strategy', customOptions.strategy);
+      // Strategy is optional, backend defaults to 'quality'
+      if (customOptions.strategy) {
+        formData.append('custom_strategy', customOptions.strategy);
+      }
+
       formData.append('custom_max_size_mb', customOptions.maxSizeMb.toString());
       formData.append('custom_format', customOptions.format);
 
-      // Handle dimension options
-      if (customOptions.maxDimension !== 'original') {
-        const dimension = parseInt(customOptions.maxDimension);
-        formData.append('custom_max_dimension', dimension.toString());
+      // Add quality parameter - defaults to 85 on backend if not specified
+      if (customOptions.quality !== undefined) {
+        formData.append('custom_quality', customOptions.quality.toString());
       }
 
       // Handle custom dimensions if specified

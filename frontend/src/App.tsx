@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
 import { UploadZone } from './components/UploadZone';
-import { PresetSelector } from './components/PresetSelector';
 import { ProcessingStatus } from './components/ProcessingStatus';
 import { ResultsDisplay } from './components/ResultsDisplay';
-import { Figmaman } from './components/Figmaman';
 import { LoginPrompt } from './components/LoginPrompt';
 import { UserHeader } from './components/UserHeader';
 import { DarkModeToggle } from './components/DarkModeToggle';
 import { ProgressIndicator } from './components/ProgressIndicator';
-import { SizePreview } from './components/SizePreview';
-import { OnboardingTooltip, OnboardingControls } from './components/OnboardingTooltip';
 import { DebugPanel } from './components/DebugPanel';
+import { UnifiedWorkflow } from './components/UnifiedWorkflow';
+import { SimpleTooltip } from './components/SimpleTooltip';
 import { apiService } from './services/api';
 import { authService, type PixelPrepUser } from './services/auth';
 import { configService } from './services/config';
 import { storageService } from './services/storage';
 import { getImageDimensions, analyzeImage, recommendPreset } from './utils/imageAnalysis';
-import type { UploadState, ProcessorsResponse, PresetName } from './types';
+import type { UploadState, ProcessorsResponse, PresetName, CustomOptimization } from './types';
 
 function App() {
   const [processors, setProcessors] = useState<ProcessorsResponse | null>(null);
@@ -27,10 +25,9 @@ function App() {
     preset: null,
     optimizationMode: 'presets',
     customOptimization: {
-      strategy: 'quality', // Default as specified
-      maxDimension: 'original',
       maxSizeMb: 5.0,
-      format: 'JPEG'
+      format: 'JPEG',
+      quality: 85 // Default quality level
     },
     isUploading: false,
     result: null,
@@ -344,6 +341,10 @@ function App() {
     setUploadState(prev => ({ ...prev, includeMetadata }));
   };
 
+  const handleCustomOptimizationUpdate = (customOptimization: CustomOptimization & { quality?: number }) => {
+    setUploadState(prev => ({ ...prev, customOptimization }));
+  };
+
   const handleLogout = () => {
     setUser(null);
     // Only load usage count if auth is required
@@ -462,162 +463,53 @@ function App() {
                 isProcessing={uploadState.isUploading}
               />
 
-              <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
-                <div className="space-y-8">
-                  <OnboardingTooltip
-                    id="upload-zone"
-                    title="Start Here!"
-                    content="Drag and drop your artwork or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 50MB."
-                    position="bottom"
-                    onboardingStep={0}
-                  >
+              {/* Upload Zone - Only show when no file is selected */}
+              {!uploadState.file && (
+                <SimpleTooltip
+                  title="Upload Your Artwork"
+                  content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
+                  position="bottom"
+                >
+                  <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
                     <UploadZone
                       onFileSelect={handleFileSelect}
                       selectedFile={uploadState.file}
                       error={uploadState.error}
                     />
-                  </OnboardingTooltip>
+                  </div>
+                </SimpleTooltip>
+              )}
 
-                  {uploadState.file && processors && (
-                    <OnboardingTooltip
-                      id="preset-selector"
-                      title="Choose Your Style"
-                      content="Each preset is optimized for different uses. The highlighted option is our smart recommendation based on your image dimensions."
-                      position="top"
-                      onboardingStep={1}
-                    >
-                      <PresetSelector
-                        processors={processors}
-                        selectedPreset={uploadState.preset}
-                        onPresetSelect={handlePresetSelect}
-                        recommendation={uploadState.recommendation}
-                        imageAnalysis={uploadState.imageAnalysis}
-                      />
-                    </OnboardingTooltip>
-                  )}
+              {/* Unified Workflow - Show when file is uploaded but not processing */}
+              {uploadState.file && !uploadState.isUploading && (
+                <UnifiedWorkflow
+                  uploadState={uploadState}
+                  processors={processors}
+                  onPresetSelect={handlePresetSelect}
+                  onMetadataToggle={handleMetadataToggle}
+                  onCustomOptimizationUpdate={handleCustomOptimizationUpdate}
+                  onUpload={handleUpload}
+                  onReset={resetUpload}
+                  hasExceededFreeLimit={hasExceededFreeLimit}
+                  setShowLoginPrompt={setShowLoginPrompt}
+                />
+              )}
 
-                  {uploadState.file && uploadState.preset && !uploadState.isUploading && (
-                    <OnboardingTooltip
-                      id="size-preview"
-                      title="Size Preview"
-                      content="See how much space you'll save before processing! This estimate is based on your file type and selected preset."
-                      position="bottom"
-                      onboardingStep={2}
-                    >
-                      <SizePreview
-                        originalFile={uploadState.file}
-                        preset={uploadState.preset}
-                        dimensions={uploadState.imageAnalysis ? {
-                          width: uploadState.imageAnalysis.width,
-                          height: uploadState.imageAnalysis.height
-                        } : undefined}
-                      />
-                    </OnboardingTooltip>
-                  )}
-
-                  {uploadState.file && uploadState.preset && !uploadState.isUploading && (
-                    <div className="space-y-6">
-                      {/* Metadata Toggle */}
-                      <div className="flex justify-center">
-                        <label className="group flex items-center space-x-3 text-sm text-secondary cursor-pointer bg-secondary rounded-xl px-4 py-3 hover:bg-tertiary transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={uploadState.includeMetadata}
-                            onChange={(e) => handleMetadataToggle(e.target.checked)}
-                            className="rounded border-primary accent-primary focus:ring-2 focus:ring-accent-primary"
-                          />
-                          <div>
-                            <span className="font-medium text-primary">Include metadata</span>
-                            <div className="text-xs text-tertiary">ZIP format with processing details</div>
-                          </div>
-                        </label>
-                      </div>
-
-                      {/* Ready to optimize notification */}
-                      <div className="text-center">
-                        <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 px-4 py-2 rounded-2xl text-sm font-medium border border-blue-200">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span>Ready to optimize your artwork!</span>
-                        </div>
-                        <p className="text-xs text-blue-600 mt-2 font-medium">
-                          Click the button below to begin
-                        </p>
-                      </div>
-
-                      {/* Manual Start Button (in case they want to start early) */}
-                      <div className="flex justify-center">
-                        {hasExceededFreeLimit ? (
-                          <div className="text-center">
-                            <div className="bg-secondary border border-primary rounded-xl p-6 mb-4">
-                              <div className="text-2xl mb-3">🔒</div>
-                              <h3 className="text-lg font-semibold text-primary mb-2">
-                                Free limit reached
-                              </h3>
-                              <p className="text-secondary text-sm mb-4">
-                                You've used your free optimization! Sign in to continue optimizing unlimited images.
-                              </p>
-                              <button
-                                onClick={() => setShowLoginPrompt(true)}
-                                className="accent-purple-bg text-inverse px-8 py-3 rounded-lg font-semibold accent-purple-hover transition-colors shadow-lg hover:shadow-xl"
-                              >
-                                <svg className="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                                </svg>
-                                Sign in with GitHub
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <OnboardingTooltip
-                            id="start-processing"
-                            title="Ready to Optimize!"
-                            content="Click this button to start optimizing your image. You're in complete control - processing only starts when you click!"
-                            position="top"
-                            onboardingStep={3}
-                          >
-                            <button
-                              onClick={() => {
-                                // Clear any pending timer (shouldn't exist now, but safe cleanup)
-                                if (autoProcessTimer) {
-                                  clearTimeout(autoProcessTimer);
-                                  setAutoProcessTimer(null);
-                                }
-                                handleUpload();
-                              }}
-                              disabled={uploadState.isUploading}
-                              className="accent-primary-bg text-inverse px-8 py-3 rounded-lg font-semibold accent-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg hover:shadow-xl"
-                            >
-                              <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                              Optimize Image{!user && usageCount === 0 ? ' (Free)' : ''}
-                            </button>
-                          </OnboardingTooltip>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {uploadState.isUploading && (
-                    <ProcessingStatus
-                      preset={uploadState.preset || undefined}
-                      fileName={uploadState.file?.name}
-                    />
-                  )}
-              </div>
-              </div>
+              {/* Processing Status - Show during upload */}
+              {uploadState.isUploading && (
+                <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
+                  <ProcessingStatus
+                    preset={uploadState.preset || undefined}
+                    fileName={uploadState.file?.name}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {/* Figmaman floating character */}
-      <Figmaman />
 
-      {/* Onboarding Controls */}
-      <OnboardingControls />
 
       {/* Login Prompt Modal */}
       {authEnabled && showLoginPrompt && (
