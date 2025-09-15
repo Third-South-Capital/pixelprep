@@ -40,7 +40,7 @@ export function SimpleTooltip({
   };
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative ${className}`}>
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
