@@ -2,8 +2,8 @@
 
 <!--
 User Context: ../CONTEXT.md
-Last Updated: 2025-09-13
-Status: READY FOR v2.1.0 DEPLOYMENT ✅
+Last Updated: 2025-09-14
+Status: DEPLOYED v2.1.1 ✅
 Phase 1: COMPLETED ✅ (5 presets, 60+ tests)
 Phase 2: COMPLETED ✅ (Database integration validated 100%)
 Phase 3: COMPLETED ✅ (Frontend deployed & live)
@@ -11,9 +11,10 @@ Phase 4: COMPLETED ✅ (EntryThingy design system integration)
 Hotfix v2.0.1: DEPLOYED ✅ (Accurate file size reporting fix)
 Hotfix v2.0.2: DEPLOYED ✅ (Contradictory auth state display fix)
 Hotfix v2.0.3: DEPLOYED ✅ (JPEG compression standardization)
-Major Release v2.1.0: READY FOR DEPLOYMENT ✅ (Custom presets + UX improvements)
+Major Release v2.1.0: DEPLOYED ✅ (Custom presets + UX improvements)
+Enhancement v2.1.1: DEPLOYED ✅ (Simplified custom controls interface)
 Repository Structure: ORGANIZED ✅ (Clean directory hierarchy)
-Current: Production deployment strategy prepared
+Current: Production ready with simplified custom optimization controls
 -->
 
 This file provides guidance to Claude Code when working with PixelPrep.
@@ -24,7 +25,7 @@ PixelPrep is a freemium image optimization tool for artists who need to resize/o
 **Core Flow**: Upload image → Select preset OR customize settings → Download optimized version(s)
 **Business Model**: Free for 1-2 images, then SSO login required for unlimited use
 **Hidden Goal**: Build artist email list + collect artwork samples for AI analysis
-**NEW v2.1.0**: Custom optimization presets + Enhanced UX with onboarding tooltips
+**NEW v2.1.1**: Simplified custom optimization controls with direct manual inputs and streamlined UX
 
 ## 🚀 Production Deployment (LIVE)
 - **Live Frontend**: https://third-south-capital.github.io/pixelprep/
@@ -577,6 +578,64 @@ AUTH_REQUIRED=false           # Current production setting
 - Enhanced visual feedback throughout
 - Accurate file size reporting
 - Professional-grade results display
+
+## v2.1.1 Enhancement: Simplified Custom Controls Interface ✅ DEPLOYED (2025-09-14)
+
+### 🎯 **User Experience Simplification**
+v2.1.1 represents a significant UX improvement based on user feedback, simplifying the custom optimization interface for better usability and faster workflow completion.
+
+### 🔧 **Interface Improvements**
+**Simplified Control Panel:**
+- **Removed Strategy Toggles**: Eliminated confusing "Quality vs Size" strategy selection
+- **Always-Visible Controls**: Advanced controls are now permanently visible (no collapsible sections)
+- **Direct Quality Control**: Precise quality slider (10-100%) with real-time state management
+- **Streamlined Dimensions**: Replaced max dimension presets with direct width/height input fields
+- **Logical Workflow Order**: Reordered sections for intuitive flow (Quality → Format → Dimensions → File Size)
+
+**Enhanced Validation System:**
+- **Real-Time Feedback**: Validation warnings appear immediately as users adjust parameters
+- **Impossible Combination Prevention**: Clear warnings for unrealistic parameter combinations
+- **Visual Indicators**: Color-coded warnings with helpful explanatory text
+
+### 🛠️ **Technical Implementation**
+**Frontend Enhancements:**
+```tsx
+// Simplified CustomOptionsPanel with direct controls
+<SimpleTooltip title="Quality Level Control" content="...">
+  <input type="range" min="10" max="100"
+         value={customOptimization.quality || 85}
+         onChange={(e) => handleQualityChange(parseInt(e.target.value))} />
+</SimpleTooltip>
+```
+
+**Tooltip System Replacement:**
+- **SimpleTooltip Component**: Replaced complex onboarding tooltips with always-available hover tooltips
+- **No Dependencies**: Tooltips work immediately without localStorage or onboarding state
+- **Consistent Experience**: Hover-triggered help available throughout the interface
+
+**Backend Integration:**
+- **Enhanced Quality Parameters**: Backend now accepts precise quality values (10-100)
+- **Conditional Parameter Passing**: Frontend only sends quality when user explicitly sets it
+- **Backward Compatibility**: Default quality behavior preserved for existing workflows
+
+### 📊 **User Impact**
+**Improved Workflow:**
+- **Faster Setup**: Users can immediately access all controls without clicking through sections
+- **Clearer Intent**: Direct input fields make user intentions more obvious
+- **Better Discovery**: Hover tooltips provide contextual help without getting in the way
+- **Reduced Confusion**: Elimination of strategy concepts that users found confusing
+
+**Technical Benefits:**
+- **Simpler State Management**: Fewer conditional UI states to manage
+- **Better Performance**: Always-rendered controls avoid complex show/hide logic
+- **Enhanced Accessibility**: Direct controls are more screen-reader friendly
+- **Maintainable Code**: Simplified component structure reduces complexity
+
+### 🚀 **Deployment Status**
+- ✅ **Frontend Changes**: CustomOptionsPanel, SimpleTooltip components deployed
+- ✅ **Backend Integration**: Enhanced quality parameter handling active
+- ✅ **Build Verification**: TypeScript compilation and production build successful
+- ✅ **Feature Compatibility**: Works seamlessly with existing v2.1.0 infrastructure
 
 ## Phase 3 Preparation (Frontend Development)
 
