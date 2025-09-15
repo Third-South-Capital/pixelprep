@@ -439,7 +439,7 @@ function App() {
           )}
         </div>
 
-        <div className="w-full">
+        <div className="w-full flex flex-col items-center">
           {uploadState.result ? (
             <div data-results>
               {/* Progress Indicator */}
@@ -466,26 +466,27 @@ function App() {
 
               {/* Upload Zone - Only show when no file is selected */}
               {!uploadState.file && (
-                <SimpleTooltip
-                  title="Upload Your Artwork"
-                  content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
-                  position="bottom"
-                >
-                  <div className="bg-primary rounded-xl shadow-lg border border-primary p-10 flex justify-center items-center">
-                    <div className="w-full max-w-2xl">
+                <div className="w-full max-w-4xl">
+                  <SimpleTooltip
+                    title="Upload Your Artwork"
+                    content="Drag & drop your image here or click to browse. We support JPEG, PNG, WebP, and TIFF files up to 10MB. Your image stays private and secure."
+                    position="bottom"
+                  >
+                    <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
                       <UploadZone
                         onFileSelect={handleFileSelect}
                         selectedFile={uploadState.file}
                         error={uploadState.error}
                       />
                     </div>
-                  </div>
-                </SimpleTooltip>
+                  </SimpleTooltip>
+                </div>
               )}
 
               {/* Unified Workflow - Show when file is uploaded but not processing */}
               {uploadState.file && !uploadState.isUploading && (
-                <UnifiedWorkflow
+                <div className="w-full max-w-4xl">
+                  <UnifiedWorkflow
                   uploadState={uploadState}
                   processors={processors}
                   onPresetSelect={handlePresetSelect}
@@ -496,15 +497,18 @@ function App() {
                   hasExceededFreeLimit={hasExceededFreeLimit}
                   setShowLoginPrompt={setShowLoginPrompt}
                 />
+                </div>
               )}
 
               {/* Processing Status - Show during upload */}
               {uploadState.isUploading && (
-                <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
+                <div className="w-full max-w-4xl">
+                  <div className="bg-primary rounded-xl shadow-lg border border-primary p-10">
                   <ProcessingStatus
                     preset={uploadState.preset || undefined}
                     fileName={uploadState.file?.name}
                   />
+                  </div>
                 </div>
               )}
             </>
