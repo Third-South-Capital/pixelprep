@@ -89,7 +89,7 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {presets.map(({ key, icon }) => {
           const config = processors.processors[key];
           if (!config) return null;
@@ -102,7 +102,7 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
               key={key}
               onClick={() => onPresetSelect(key)}
               className={`
-                group p-4 lg:p-6 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-xl h-full min-h-[260px] lg:min-h-[280px] flex flex-col relative
+                group p-3 lg:p-4 rounded-lg border-2 text-left transition-all duration-300 hover:shadow-lg h-full min-h-[180px] lg:min-h-[200px] flex flex-col relative
                 ${isSelected
                   ? (isRecommended
                       ? 'border-blue-400 bg-blue-50 shadow-xl ring-2 ring-blue-200'
@@ -149,18 +149,18 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
                   </div>
                 </div>
               )}
-              <div className="flex flex-col space-y-4 h-full">
+              <div className="flex flex-col space-y-2 h-full">
                 <div className="flex items-center space-x-3">
-                  <div className={`text-xl lg:text-2xl p-2 rounded-xl transition-all ${
-                    isSelected ? 'bg-primary shadow-md' : 'bg-secondary group-hover:bg-primary group-hover:shadow-md'
+                  <div className={`text-lg p-1.5 rounded-lg transition-all ${
+                    isSelected ? 'bg-primary shadow-sm' : 'bg-secondary group-hover:bg-primary group-hover:shadow-sm'
                   }`}>{icon}</div>
                   <div className="flex-1">
-                    <h4 className="text-base lg:text-lg font-bold text-primary mb-1 leading-tight">{config.name}</h4>
+                    <h4 className="text-sm lg:text-base font-bold text-primary mb-0.5 leading-tight">{config.name}</h4>
                   </div>
                 </div>
-                <p className="text-xs lg:text-sm text-secondary leading-relaxed flex-shrink-0">{config.description}</p>
+                <p className="text-xs text-secondary leading-snug flex-shrink-0">{config.description}</p>
 
-                <div className="bg-tertiary rounded-xl p-2 lg:p-3 space-y-1 lg:space-y-2 text-xs flex-grow">
+                <div className="bg-tertiary rounded-lg p-2 space-y-1 text-xs flex-grow">
                   {config.dimensions && (
                     <div className="flex justify-between items-center">
                       <span className="text-secondary">Dimensions:</span>
@@ -200,8 +200,8 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
                 </div>
 
                 {config.use_case && (
-                  <div className="bg-secondary rounded-xl p-2 lg:p-3 mt-auto border border-primary">
-                    <p className="text-xs lg:text-sm text-primary font-medium">
+                  <div className="bg-secondary rounded-lg p-2 mt-auto border border-primary">
+                    <p className="text-xs text-primary font-medium">
                       ✨ Perfect for: {config.use_case}
                     </p>
                   </div>
