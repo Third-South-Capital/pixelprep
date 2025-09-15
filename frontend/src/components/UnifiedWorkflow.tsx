@@ -87,7 +87,7 @@ export function UnifiedWorkflow({
         </SimpleTooltip>
 
         {/* Custom Options Panel - Only show for custom preset */}
-        {uploadState.preset === 'custom' && processors.custom_presets_enabled && (
+        {uploadState.preset === 'custom' && processors.custom_presets_enabled && processors.custom_dimensions_enabled && (
           <div className="mb-8">
             <CustomOptionsPanel
               customOptimization={uploadState.customOptimization || {

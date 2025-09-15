@@ -23,10 +23,13 @@ export function PresetSelector({ processors, selectedPreset, onPresetSelect, rec
     { key: 'quick_compress', icon: '⚡' },
   ];
 
-  // Add custom preset if enabled
+  // Add custom preset if both custom presets and custom dimensions are enabled
   const presets: { key: PresetName; icon: string }[] = [...basePresets];
+  const customEnabled = processors.custom_presets_enabled && processors.custom_dimensions_enabled;
   console.log('🔍 [PresetSelector] Checking custom presets condition:', processors.custom_presets_enabled);
-  if (processors.custom_presets_enabled) {
+  console.log('🔍 [PresetSelector] Checking custom dimensions condition:', processors.custom_dimensions_enabled);
+  console.log('🔍 [PresetSelector] Custom preset enabled (both flags):', customEnabled);
+  if (customEnabled) {
     console.log('🔍 [PresetSelector] Adding custom preset to list');
     presets.push({ key: 'custom', icon: '⚙️' });
   } else {
