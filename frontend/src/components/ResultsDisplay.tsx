@@ -266,8 +266,8 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {originalImageUrl && (
-                <div className="space-y-4">
-                  <div className="text-center">
+                <div className="flex flex-col h-full">
+                  <div className="text-center mb-4">
                     <h4 className="text-xl font-bold text-blue-600 mb-2 flex items-center justify-center">
                       <span className="bg-blue-100 rounded-full p-1 mr-2">
                         <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,24 +278,24 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
                       Original
                     </h4>
                   </div>
-                  <div className="relative overflow-hidden rounded-2xl border-2 border-blue-200 bg-white shadow-lg hover:shadow-xl transition-shadow">
+                  <div className="relative overflow-hidden rounded-2xl border-2 border-blue-200 bg-white shadow-lg hover:shadow-xl transition-shadow flex-grow flex items-center justify-center" style={{minHeight: '320px'}}>
                     <img
                       src={originalImageUrl}
                       alt="Original artwork"
-                      className="w-full h-auto max-h-80 object-contain mx-auto"
+                      className="max-w-full max-h-80 object-contain"
                     />
                   </div>
-                  <div className="text-center bg-blue-100 rounded-xl p-3">
+                  <div className="text-center bg-blue-100 rounded-xl p-3 mt-4">
                     <p className="text-sm font-bold text-blue-800">
                       {formatFileSize(originalFileSize || originalFile.size)}
                     </p>
                   </div>
                 </div>
               )}
-              
+
               {optimizedImageUrl && (
-                <div className="space-y-4">
-                  <div className="text-center">
+                <div className="flex flex-col h-full">
+                  <div className="text-center mb-4">
                     <h4 className="text-xl font-bold text-emerald-600 mb-2 flex items-center justify-center">
                       <span className="bg-emerald-100 rounded-full p-1 mr-2">
                         <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,14 +305,14 @@ export function ResultsDisplay({ result, originalFile, originalImageUrl, optimiz
                       Optimized
                     </h4>
                   </div>
-                  <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-white shadow-lg hover:shadow-xl transition-shadow">
+                  <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-white shadow-lg hover:shadow-xl transition-shadow flex-grow flex items-center justify-center" style={{minHeight: '320px'}}>
                     <img
                       src={optimizedImageUrl}
                       alt="Optimized artwork"
-                      className="w-full h-auto max-h-80 object-contain mx-auto"
+                      className="max-w-full max-h-80 object-contain"
                     />
                   </div>
-                  <div className="text-center bg-emerald-100 rounded-xl p-3">
+                  <div className="text-center bg-emerald-100 rounded-xl p-3 mt-4">
                     <p className="text-sm font-bold text-emerald-800">
                       {formatFileSize(optimizedBlob?.size || result.metadata.file_size_bytes)}
                     </p>
