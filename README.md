@@ -1,8 +1,8 @@
 # PixelPrep - Professional Image Optimization for Artists
 
-[![Production Status](https://img.shields.io/badge/status-production-success)](https://third-south-capital.github.io/pixelprep/)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](#)
-[![Backend API](https://img.shields.io/badge/API-development-orange)](#)
+[![Production Status](https://img.shields.io/badge/status-live-success)](https://third-south-capital.github.io/pixelprep/)
+[![Version](https://img.shields.io/badge/version-v2.1.5-blue)](#)
+[![Backend API](https://img.shields.io/badge/API-live-green)](https://pixelprep.onrender.com/health)
 [![Design System](https://img.shields.io/badge/UI-EntryThingy-purple)](https://entrythingy.com)
 
 > **🎨 Transform your artwork for any platform with professional optimization presets designed specifically for artists.**
@@ -11,23 +11,32 @@
 
 ## 🚀 Live Application
 
-**🌐 Frontend**: *In Development* - Static React build
-**🔧 Backend API**: *In Development* - FastAPI server (localhost:8000)
+**🌐 Frontend**: [https://third-south-capital.github.io/pixelprep/](https://third-south-capital.github.io/pixelprep/)
+**🔧 Backend API**: [https://pixelprep.onrender.com/](https://pixelprep.onrender.com/) (Health: [/health](https://pixelprep.onrender.com/health))
 
 ## Features
 
 ### 🎨 Professional Design System
 - **EntryThingy UI**: Clean, professional interface matching EntryThingy's design language
+- **Enhanced Visual Hierarchy**: Prominent upload zone with clear primary action (v2.1.5)
+- **Intuitive Status Indicators**: Redesigned step indicators as non-intrusive status elements
 - **Dark/Light Mode**: Complete theme support with user preference persistence
 - **Typography**: Outfit font with proper hierarchy and accessibility
 - **Responsive Design**: Optimized for all devices and screen sizes
 
 ### Image Optimization Presets
 - **Instagram Square**: 1080×1080px, <4MB, JPEG, sRGB
-- **Jury Submission**: 1920px longest side, 1-2MB, JPEG, 72-300 DPI  
+- **Jury Submission**: 1920px longest side, 1-2MB, JPEG, 72-300 DPI
 - **Web Display**: 1920px wide, <500KB, WebP with JPEG fallback
 - **Email Newsletter**: 600px wide, <200KB, JPEG
 - **Quick Compress**: Keep dimensions, reduce file size by 70%
+- **Custom Presets**: User-defined optimization with quality, format, and dimension controls (v2.1.0+)
+
+### Enhanced User Experience
+- **Smart Recommendations**: AI-powered preset suggestions based on image analysis
+- **Before & After Comparisons**: Aligned measurement boxes for clear size savings (v2.1.5)
+- **Real-Time Size Preview**: File size estimates before processing
+- **Simplified Custom Controls**: Direct quality and dimension inputs (v2.1.1)
 
 ### Dual-Mode Operation
 - **Anonymous Users**: Instant processing with temporary storage
@@ -59,14 +68,14 @@ just dev
 
 **Anonymous Upload:**
 ```bash
-curl -X POST "http://localhost:8000/optimize/" \
+curl -X POST "https://pixelprep.onrender.com/optimize/" \
   -F "file=@image.jpg" \
   -F "preset=instagram_square"
 ```
 
 **Authenticated Upload:**
 ```bash
-curl -X POST "http://localhost:8000/optimize/" \
+curl -X POST "https://pixelprep.onrender.com/optimize/" \
   -H "Authorization: Bearer <jwt_token>" \
   -F "file=@image.jpg" \
   -F "preset=jury_submission"
@@ -184,29 +193,30 @@ python scripts/phase2_validation.py
 - Memory-efficient processing
 - Production-ready error handling
 
-## Development Status
+## Production Status
 
 - ✅ **Phase 1**: Core image optimization (5 presets, 60+ tests) - *COMPLETED*
 - ✅ **Phase 2**: Authentication, persistent storage, user management - *COMPLETED*
 - ✅ **Phase 3**: React frontend, professional UI/UX - *COMPLETED*
-- 🚧 **Current**: Development system ready for deployment
-- 📋 **Next**: Production deployment, monitoring, analytics
+- ✅ **Phase 4**: Production deployment with enhanced UX - *LIVE*
+- 📈 **Current**: Live production system serving users
 
-### Development Ready v0.1.0 ✅
-**🌐 Frontend**: React 19.1.1 + TypeScript → Vite dev server
-**⚙️ Backend**: FastAPI + Python 3.11 → uvicorn dev server
-**🗄️ Database**: Supabase PostgreSQL with RLS (configured)
-**🔐 Authentication**: GitHub OAuth + JWT (fully functional)
-**🎨 UI/UX**: Professional TailwindCSS interface (polished)
-**📊 Status**: **Development complete**, ready for production deployment
+### Production Live v2.1.5 ✅
+**🌐 Frontend**: React 19.1.1 + TypeScript → GitHub Pages (Live)
+**⚙️ Backend**: FastAPI + Python 3.11 → Render.com (Live)
+**🗄️ Database**: Supabase PostgreSQL with RLS (Active)
+**🔐 Authentication**: GitHub OAuth + JWT (Active)
+**🎨 UI/UX**: Enhanced visual hierarchy with simplified workflow
+**📊 Status**: **Production live**, serving artists worldwide
 
-### Key Features in Development
-- **Anonymous Processing**: Instant upload → optimize → download
-- **Authenticated Users**: Persistent gallery + optimization history
-- **5 Professional Presets**: Instagram, Jury, Web, Email, Compression
-- **Dual Storage Architecture**: Memory-based + Supabase persistence
-- **GitHub OAuth**: Secure authentication with JWT tokens
-- **CORS Configured**: Development domains (localhost:3000, localhost:5173)
+### Key Production Features
+- **Enhanced Upload Zone**: Prominent visual hierarchy (v2.1.5)
+- **Intuitive Status Flow**: Redesigned step indicators as status elements
+- **Aligned Comparisons**: Before/after measurement boxes at consistent height
+- **Smart Recommendations**: AI-powered preset suggestions based on image analysis
+- **Custom Optimization**: User-defined quality, format, and dimensions (v2.1.0)
+- **Anonymous + Authenticated**: Instant processing or persistent galleries
+- **Professional Results**: Celebration UI with accurate file size reporting
 
 ## Contributing
 

@@ -1,6 +1,69 @@
 # ✅ ACTUAL UX Fixes Implemented & Tested
 
-## 🚨 Issues Reported from Local Testing
+## 🚨 Issues Reported from Production Usage
+1. **Visual hierarchy unclear** - users confused about primary action area
+2. **Step indicators look clickable** - misleading interactive appearance
+3. **Before/after comparison misaligned** - measurement boxes at different heights
+4. **Upload zone lacks prominence** - doesn't feel like primary interaction area
+
+## 🔧 LATEST Production Fixes (v2.1.5 - September 2025)
+
+### 1. ✅ **Enhanced Upload Zone Visual Hierarchy**
+
+**Issue**: Upload zone didn't feel primary due to weak visual weight and competing elements.
+
+**Fix Applied**:
+- **Stronger Borders**: Upgraded from `border-2` to `border-3` with thicker dashed lines
+- **Enhanced Shadows**: Added `shadow-lg hover:shadow-2xl` with scale transforms
+- **Larger Container**: Increased padding from `p-12` to `p-16`
+- **Interactive Effects**: Ring animations and scale on hover/drag states
+- **Accent Branding**: Prominent accent-primary colors throughout
+- **Larger Icons**: Upload icon increased from 16x16 to 20x20 with drop shadow
+- **Bolder Typography**: Enhanced to `text-3xl font-black` with strong hover states
+
+**Files Changed**: `src/components/UploadZone.tsx`
+
+**Result**: Upload zone now clearly the primary interactive element with strong visual presence.
+
+---
+
+### 2. ✅ **Redesigned Step Indicators as Status Elements**
+
+**Issue**: Step indicators looked clickable/interactive, causing user confusion about navigation.
+
+**Fix Applied**:
+- **Reduced Size**: Changed from large 16x16 circles to compact 6x6 status indicators
+- **Horizontal Layout**: Switched from vertical stacked to inline horizontal design
+- **Muted Styling**: Replaced prominent backgrounds with subtle backdrop-blur
+- **Removed Interactivity**: Eliminated hover effects, pulse animations, ring elements
+- **Simple Icons**: Basic dots, checkmarks, and spinners instead of complex step icons
+- **Minimal Text**: Changed from colored badges to simple "Step X of 3" status text
+
+**Files Changed**: `src/components/ProgressIndicator.tsx`
+
+**Result**: Step indicators now clearly informational/status elements, not navigation controls.
+
+---
+
+### 3. ✅ **Fixed Before & After Comparison Alignment**
+
+**Issue**: Measurement boxes appeared at different vertical heights due to varying image aspect ratios.
+
+**Fix Applied**:
+- **Flex Layout Structure**: Changed from `space-y-4` to `flex flex-col h-full` layout
+- **Fixed Container Heights**: Set consistent `minHeight: '320px'` for image areas
+- **Centered Positioning**: Images center both horizontally and vertically with flexbox
+- **Aligned Measurement Boxes**: File size boxes now align at same vertical position
+
+**Files Changed**: `src/components/ResultsDisplay.tsx`
+
+**Result**: Professional side-by-side comparison with measurement boxes always aligned.
+
+---
+
+## 🔧 Previous UX Fixes (Earlier Versions)
+
+## 🚨 Historical Issues Reported from Local Testing
 1. **Tooltips completely missing** (not just timing)
 2. **Auto-scroll to results not working**
 3. **Pulsing upload indicator misleads users** - pulses where upload doesn't happen

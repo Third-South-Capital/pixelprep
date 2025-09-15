@@ -786,6 +786,126 @@ className="max-w-md"  // Previously max-w-sm
 - ✅ **Commit Applied**: Conventional commit with proper documentation
 - ✅ **Ready for Production**: Optimized UI ready for live deployment
 
+## UI Enhancement v2.1.5: Visual Hierarchy and Comparison Layout Improvements ✅ DEPLOYED (2025-09-15)
+
+### 🎯 **Interface Hierarchy Optimization**
+v2.1.5 focuses on improving visual hierarchy and user experience by enhancing upload zone prominence, redesigning step indicators as status elements, and aligning measurement boxes in the Before & After comparison.
+
+### ✅ **Upload Zone Prominence Enhancement**
+
+**Stronger Visual Weight:**
+- **Thicker Borders**: Upgraded from `border-2` to `border-3` with more prominent dashed lines
+- **Enhanced Shadows**: Added `shadow-lg hover:shadow-2xl` with subtle scale transforms on interaction
+- **Larger Container**: Increased padding from `p-12` to `p-16` for greater presence
+- **Interactive Effects**: Added ring effects and scale animations on hover/drag states
+- **Accent Branding**: Changed border colors to use accent-primary instead of generic colors
+
+**Enhanced Content Styling:**
+- **Larger Upload Icon**: Increased from 16x16 to 20x20 with accent color and drop shadow
+- **Bolder Typography**: Enhanced title to `text-3xl font-black` with stronger hover effects
+- **Prominent CTA**: Made "click to browse" more visible with bold accent colors and larger text
+- **Professional Background**: Added accent-primary background tints with subtle borders
+
+### ✅ **Step Indicators Redesign as Status Elements**
+
+**Reduced Visual Competition:**
+- **Compact Size**: Reduced large 16x16 interactive-looking circles to small 6x6 status indicators
+- **Horizontal Layout**: Changed from stacked vertical to inline horizontal for space efficiency
+- **Muted Styling**: Replaced prominent backgrounds and shadows with subtle backdrop-blur design
+- **Removed Interactivity**: Eliminated hover effects, pulse animations, and ring elements that suggested clickability
+
+**Status-Focused Design:**
+- **Simple Icons**: Replaced complex step icons with basic dots, checkmarks, and spinners
+- **Minimal Text**: Changed from prominent colored badges to simple "Step X of 3" status text
+- **Subtle Container**: Used translucent background with minimal borders for unobtrusive presence
+- **Context Only**: Positioned as informational elements rather than navigation controls
+
+### ✅ **Before & After Comparison Alignment**
+
+**Measurement Box Alignment:**
+- **Flex Layout Structure**: Changed from `space-y-4` to `flex flex-col h-full` for both image containers
+- **Fixed Container Heights**: Set consistent `minHeight: '320px'` for uniform image area dimensions
+- **Centered Image Positioning**: Images now center both horizontally and vertically using flexbox
+- **Aligned Bottom Positioning**: File size measurement boxes now align at same vertical height regardless of image aspect ratios
+
+**Enhanced Comparison Experience:**
+- **Consistent Visual Structure**: Both images occupy equal space with centered positioning
+- **Professional Layout**: Clean side-by-side comparison regardless of artwork dimensions
+- **Better Readability**: Measurement boxes always align for easy size comparison
+
+### 🔧 **Technical Implementation**
+
+**UploadZone Component Enhancements:**
+```typescript
+// Enhanced border and shadow styling
+className="border-3 border-dashed rounded-2xl p-16 shadow-lg hover:shadow-2xl"
+
+// Interactive states with ring effects
+className="border-accent-primary bg-secondary shadow-2xl scale-[1.02] ring-4 ring-accent-primary/20"
+
+// Larger, more prominent upload icon
+className="w-20 h-20 mx-auto text-accent-primary drop-shadow-sm"
+```
+
+**ProgressIndicator Component Simplification:**
+```typescript
+// Compact status indicator container
+className="bg-secondary/60 backdrop-blur-sm rounded-xl p-4 shadow-sm"
+
+// Small status circles
+className="w-6 h-6 rounded-full flex items-center justify-center"
+
+// Horizontal layout with connecting lines
+className="flex items-center justify-center space-x-3"
+```
+
+**ResultsDisplay Comparison Layout:**
+```typescript
+// Flex container for equal height
+className="flex flex-col h-full"
+
+// Fixed height image container with centering
+style={{minHeight: '320px'}}
+className="flex-grow flex items-center justify-center"
+
+// Aligned measurement boxes
+className="text-center bg-blue-100 rounded-xl p-3 mt-4"
+```
+
+### 📊 **User Experience Impact**
+
+**Clear Visual Hierarchy:**
+- **Primary Action Obvious**: Upload zone now clearly stands out as the main interactive element
+- **Reduced Confusion**: Step indicators no longer compete visually with functional elements
+- **Professional Layout**: Clean, organized interface with proper visual weight distribution
+
+**Improved Workflow:**
+- **Intuitive Interaction**: Users immediately understand where to upload files
+- **Better Context**: Status indicators provide helpful progress information without distraction
+- **Enhanced Comparisons**: Before/after layout shows artwork transformations more effectively
+
+**Consistent Design:**
+- **Brand Alignment**: Stronger use of accent colors throughout interface
+- **Responsive Behavior**: All improvements work across different screen sizes
+- **Accessibility**: Better contrast and interaction patterns for all users
+
+### 🚀 **Deployment Status**
+- ✅ **Component Updates**: UploadZone, ProgressIndicator, ResultsDisplay enhanced and deployed
+- ✅ **Build Verification**: TypeScript compilation and production build successful (build time: 929ms)
+- ✅ **Layout Testing**: Verified alignment works with different image aspect ratios
+- ✅ **Live Deployment**: All improvements pushed to production and active
+
+### 🎉 **Business Impact**
+**For Artists:**
+- **Reduced User Confusion**: Clear visual hierarchy eliminates uncertainty about where to interact
+- **Professional Experience**: Enhanced upload zone creates confidence in the tool's quality
+- **Better Comparisons**: Aligned measurement boxes make file size savings immediately apparent
+
+**For Conversion:**
+- **Clearer Primary Action**: Prominent upload zone should increase initial engagement
+- **Reduced Abandonment**: Less confusion about interface elements should improve completion rates
+- **Professional Appearance**: Enhanced visual design builds trust and credibility
+
 ## v2.1.1 Enhancement: Simplified Custom Controls Interface ✅ DEPLOYED (2025-09-14)
 
 ### 🎯 **User Experience Simplification**
