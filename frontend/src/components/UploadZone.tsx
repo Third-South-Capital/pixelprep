@@ -55,13 +55,13 @@ export function UploadZone({ onFileSelect, selectedFile, error }: UploadZoneProp
         {...getRootProps()}
         className={`
           relative overflow-hidden group
-          border-2 border-dashed rounded-xl p-12 text-center cursor-pointer
-          transition-all duration-300 ease-in-out
-          ${isDragActive && !isDragReject ? 'border-accent-primary bg-secondary' : ''}
-          ${isDragReject ? 'border-red-400 bg-red-50' : ''}
-          ${!isDragActive && isHovering ? 'border-accent-primary bg-secondary' : ''}
-          ${!isDragActive && !isHovering ? 'border-primary hover:border-accent-primary hover:bg-secondary' : ''}
-          ${selectedFile ? 'border-accent-secondary bg-secondary' : ''}
+          border-3 border-dashed rounded-2xl p-16 text-center cursor-pointer
+          transition-all duration-300 ease-in-out shadow-lg hover:shadow-2xl
+          ${isDragActive && !isDragReject ? 'border-accent-primary bg-secondary shadow-2xl scale-[1.02] ring-4 ring-accent-primary/20' : ''}
+          ${isDragReject ? 'border-red-500 bg-red-50 shadow-xl' : ''}
+          ${!isDragActive && isHovering ? 'border-accent-primary bg-secondary shadow-xl scale-[1.01] ring-2 ring-accent-primary/10' : ''}
+          ${!isDragActive && !isHovering ? 'border-accent-primary/60 hover:border-accent-primary hover:bg-secondary hover:scale-[1.01]' : ''}
+          ${selectedFile ? 'border-green-500 bg-green-50/50 shadow-xl' : ''}
         `}
         style={{
           backgroundImage: 'none'
@@ -90,10 +90,10 @@ export function UploadZone({ onFileSelect, selectedFile, error }: UploadZoneProp
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="text-tertiary group-hover:accent-primary transition-colors">
-              <div className="bg-secondary group-hover:bg-tertiary rounded-xl p-6 mb-4 transition-colors">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            <div className="text-accent-primary group-hover:text-accent-primary transition-colors">
+              <div className="bg-accent-primary/10 group-hover:bg-accent-primary/20 rounded-2xl p-8 mb-6 transition-colors ring-2 ring-accent-primary/20">
+                <svg className="w-20 h-20 mx-auto text-accent-primary drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
             </div>
@@ -127,15 +127,15 @@ export function UploadZone({ onFileSelect, selectedFile, error }: UploadZoneProp
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-primary group-hover:accent-primary transition-colors">
+                <h3 className="text-3xl font-black text-primary group-hover:text-accent-primary transition-colors mb-2">
                   Upload Your Artwork
                 </h3>
-                <p className="text-lg text-secondary">
-                  Drag & drop your image here or <span className="accent-primary font-semibold">click to browse</span>
+                <p className="text-xl text-secondary font-medium mb-6">
+                  Drag & drop your image here or <span className="text-accent-primary font-bold text-xl">click to browse</span>
                 </p>
-                <div className="bg-secondary rounded-xl p-4 max-w-md mx-auto">
-                  <p className="text-sm text-secondary">
-                    Supports <span className="font-semibold">JPEG, PNG, WebP, TIFF, BMP</span> up to <span className="font-semibold">10MB</span>
+                <div className="bg-accent-primary/5 border border-accent-primary/20 rounded-xl p-5 max-w-lg mx-auto">
+                  <p className="text-base text-secondary font-medium">
+                    Supports <span className="font-bold text-accent-primary">JPEG, PNG, WebP, TIFF, BMP</span> up to <span className="font-bold text-accent-primary">10MB</span>
                   </p>
                 </div>
               </div>

@@ -46,52 +46,47 @@ export function ProgressIndicator({ currentStep, isProcessing = false }: Progres
   };
 
   return (
-    <div className="mb-12">
+    <div className="mb-8">
       <div className="flex justify-center">
-        <div className="bg-secondary rounded-2xl p-8 shadow-lg border border-primary">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="bg-secondary/60 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-primary/30">
+          <div className="flex items-center justify-center max-w-lg mx-auto space-x-3">
             {steps.map((step, index) => {
               const state = getStepState(step.key);
               const isLast = index === steps.length - 1;
 
               return (
                 <div key={step.key} className="flex items-center">
-                  {/* Step Circle */}
-                  <div className="flex flex-col items-center">
+                  {/* Step Circle and Label - Horizontal layout */}
+                  <div className="flex items-center">
                     <div className={`
-                      relative w-16 h-16 rounded-full border-3 flex items-center justify-center transition-all duration-500 ease-in-out
+                      w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out
                       ${state === 'completed'
-                        ? 'bg-green-500 border-green-500 text-white shadow-lg'
+                        ? 'bg-green-500 text-white'
                         : state === 'active'
-                          ? 'bg-primary border-accent-primary text-accent-primary shadow-lg ring-4 ring-accent-primary/20'
+                          ? 'bg-accent-primary text-white'
                           : state === 'processing'
-                            ? 'bg-accent-primary border-accent-primary text-white shadow-lg animate-pulse'
-                            : 'bg-tertiary border-border text-tertiary'
+                            ? 'bg-accent-primary text-white animate-pulse'
+                            : 'bg-border text-tertiary'
                       }
                     `}>
                       {state === 'processing' ? (
-                        <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                       ) : state === 'completed' ? (
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
-                        step.icon
-                      )}
-
-                      {/* Pulse ring for active step - only show when user can actually act */}
-                      {state === 'active' && !isProcessing && step.key === 'upload' && (
-                        <div className="absolute inset-0 rounded-full border-2 border-accent-primary animate-ping opacity-75"></div>
+                        <div className="w-2 h-2 rounded-full bg-current opacity-60"></div>
                       )}
                     </div>
 
-                    {/* Step Label */}
-                    <div className="mt-3 text-center">
+                    {/* Step Label - Now positioned to the right and more compact */}
+                    <div className="ml-2">
                       <p className={`
-                        text-sm font-semibold transition-colors duration-300
+                        text-xs font-medium transition-colors duration-300 whitespace-nowrap
                         ${state === 'completed'
                           ? 'text-green-600'
                           : state === 'active' || state === 'processing'
@@ -101,29 +96,18 @@ export function ProgressIndicator({ currentStep, isProcessing = false }: Progres
                       `}>
                         {step.label}
                       </p>
-
-                      {/* Processing text */}
-                      {state === 'processing' && (
-                        <p className="text-xs text-accent-primary mt-1 animate-pulse">
-                          Working...
-                        </p>
-                      )}
                     </div>
                   </div>
 
-                  {/* Connector Line */}
+                  {/* Connector Line - Smaller and more subtle */}
                   {!isLast && (
                     <div className={`
-                      flex-1 h-1 mx-8 rounded-full transition-all duration-500 ease-in-out
+                      w-6 h-px mx-2 transition-all duration-300 ease-in-out
                       ${state === 'completed'
                         ? 'bg-green-500'
                         : 'bg-border'
                       }
                     `}>
-                      {/* Animated progress for processing */}
-                      {state === 'processing' && (
-                        <div className="h-full bg-accent-primary rounded-full animate-pulse"></div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -131,33 +115,14 @@ export function ProgressIndicator({ currentStep, isProcessing = false }: Progres
             })}
           </div>
 
-          {/* Helpful tip based on current step */}
-          <div className="mt-6 text-center">
-            <div className={`
-              inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
-              ${currentStep === 'upload'
-                ? 'bg-blue-100 text-blue-800'
-                : currentStep === 'preset'
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-green-100 text-green-800'
-              }
-            `}>
-              <div className={`
-                w-2 h-2 rounded-full
-                ${currentStep === 'upload'
-                  ? 'bg-blue-500'
-                  : currentStep === 'preset'
-                    ? 'bg-purple-500'
-                    : 'bg-green-500'
-                }
-              `}></div>
-              <span>
-                {currentStep === 'upload' && 'Drag & drop or click to select your artwork'}
-                {currentStep === 'preset' && 'Choose the perfect optimization for your needs'}
-                {currentStep === 'download' && 'Your optimized image is ready to download!'}
-                {isProcessing && 'Creating your perfect image...'}
-              </span>
-            </div>
+          {/* Simplified status text */}
+          <div className="mt-3 text-center">
+            <p className="text-xs text-tertiary">
+              {currentStep === 'upload' && !isProcessing && 'Step 1 of 3'}
+              {currentStep === 'preset' && !isProcessing && 'Step 2 of 3'}
+              {currentStep === 'download' && 'Complete'}
+              {isProcessing && 'Processing...'}
+            </p>
           </div>
         </div>
       </div>
