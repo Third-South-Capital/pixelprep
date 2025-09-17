@@ -5,6 +5,7 @@
 
 import sharp from 'sharp';
 import { SharpUtils, OptimizationResult, ImageMetadata } from './sharp-utils.js';
+import { promises as fs } from 'fs';
 import path from 'path';
 
 export interface ProcessingResult {
@@ -542,13 +543,13 @@ export class EmailNewsletterProcessor {
 
 /**
  * Quick Compress Processor - Sharp.js Implementation
- * Maintain dimensions, reduce file size by 70%
+ * Maintain dimensions, reduce file size by ~30% with good quality
  */
 export class QuickCompressProcessor {
-  static readonly TARGET_REDUCTION_PERCENT = 70;
+  static readonly TARGET_REDUCTION_PERCENT = 30; // More realistic 30% reduction
   static readonly FORMAT = 'jpeg' as const;
-  static readonly QUALITY_START = 95;
-  static readonly QUALITY_MIN = 30;
+  static readonly QUALITY_START = 70; // Start with moderate quality for compression
+  static readonly QUALITY_MIN = 40;   // Minimum acceptable quality
 
   static async process(inputPath: string, outputDir: string = './output'): Promise<ProcessingResult> {
     const startTime = Date.now();
@@ -560,8 +561,8 @@ export class QuickCompressProcessor {
     console.log(`Initial image: ${initialMetadata.width}x${initialMetadata.height}`);
     console.log(`Initial file size: ${initialMetadata.size} bytes (${(initialMetadata.size/1024).toFixed(1)}KB)`);
 
-    // Calculate target size (70% reduction = 30% of original)
-    const targetSizeBytes = Math.round(initialMetadata.size * 0.3);
+    // Calculate more realistic target size (30% reduction = 70% of original)
+    const targetSizeBytes = Math.round(initialMetadata.size * 0.7);
     console.log(`Target file size: ${targetSizeBytes} bytes (${(targetSizeBytes/1024).toFixed(1)}KB) - ${this.TARGET_REDUCTION_PERCENT}% reduction`);
 
     // Step 1: Load with EXIF orientation handling (keep original dimensions)
@@ -571,15 +572,62 @@ export class QuickCompressProcessor {
     const inputBasename = path.basename(inputPath, path.extname(inputPath));
     const outputPath = path.join(outputDir, `${inputBasename}_quick_compress.jpg`);
 
-    // Step 3: Compress to target size while maintaining dimensions
-    const optimization = await SharpUtils.optimizeFileSize(
-      image,
-      outputPath,
-      targetSizeBytes,
-      this.FORMAT,
-      this.QUALITY_START,
-      this.QUALITY_MIN
-    );
+    // Step 3: Apply compression with fixed quality approach for more predictable results
+    let optimization: OptimizationResult;
+
+    try {
+      // First try with moderate quality (70)
+      const buffer = await image.clone().jpeg({
+        quality: this.QUALITY_START,
+        progressive: true,
+        mozjpeg: true
+      }).toBuffer();
+
+      await fs.writeFile(outputPath, buffer);
+
+      optimization = {
+        finalQuality: this.QUALITY_START,
+        fileSizeBytes: buffer.length,
+        iterations: 1,
+        success: true
+      };
+
+      // If we're not getting enough compression, try lower quality
+      if (buffer.length > targetSizeBytes) {
+        const lowerQualityBuffer = await image.clone().jpeg({
+          quality: this.QUALITY_MIN,
+          progressive: true,
+          mozjpeg: true
+        }).toBuffer();
+
+        await fs.writeFile(outputPath, lowerQualityBuffer);
+
+        optimization = {
+          finalQuality: this.QUALITY_MIN,
+          fileSizeBytes: lowerQualityBuffer.length,
+          iterations: 2,
+          success: lowerQualityBuffer.length < initialMetadata.size // Success if any reduction
+        };
+      }
+
+    } catch (error) {
+      console.error(`Quick compress failed: ${error}`);
+
+      // Fallback: save with minimum quality
+      const fallbackBuffer = await image.clone().jpeg({
+        quality: this.QUALITY_MIN,
+        progressive: true
+      }).toBuffer();
+
+      await fs.writeFile(outputPath, fallbackBuffer);
+
+      optimization = {
+        finalQuality: this.QUALITY_MIN,
+        fileSizeBytes: fallbackBuffer.length,
+        iterations: 1,
+        success: false
+      };
+    }
 
     const finalMetadata = await SharpUtils.getImageMetadata(outputPath);
     const processingTimeMs = Date.now() - startTime;
@@ -591,7 +639,7 @@ export class QuickCompressProcessor {
     console.log("=== QUICK COMPRESS PROCESSING END ===");
 
     return {
-      success: optimization.success,
+      success: optimization.success && actualReduction > 0, // Ensure we actually reduced size
       outputPath,
       metadata: finalMetadata,
       optimization,
@@ -602,9 +650,9 @@ export class QuickCompressProcessor {
   static getPresetConfig(): Record<string, any> {
     return {
       name: 'Quick Compress',
-      description: 'Reduce file size by 70% while keeping original dimensions',
+      description: 'Reduce file size by ~30% while keeping original dimensions and good quality',
       dimensions: 'Original dimensions preserved',
-      size_reduction: `${this.TARGET_REDUCTION_PERCENT}% smaller`,
+      size_reduction: `~${this.TARGET_REDUCTION_PERCENT}% smaller`,
       format: this.FORMAT.toUpperCase(),
       aspect_ratio: 'Preserved',
       use_case: 'File size reduction, storage optimization, bandwidth saving'

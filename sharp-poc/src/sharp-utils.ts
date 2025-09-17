@@ -32,24 +32,95 @@ export class SharpUtils {
     const image = sharp(inputPath);
     const metadata = await image.metadata();
 
+    // Get actual file size from filesystem
+    const stats = await fs.stat(inputPath);
+    const fileSize = stats.size;
+
     return {
       width: metadata.width || 0,
       height: metadata.height || 0,
       format: metadata.format || 'unknown',
-      size: metadata.size || 0,
+      size: fileSize,
       orientation: metadata.orientation,
       hasProfile: !!metadata.icc
     };
   }
 
   /**
-   * Process image with automatic EXIF orientation handling
-   * Sharp automatically handles EXIF orientation when called with rotate()
+   * Process image with comprehensive EXIF orientation handling
+   * Handles all 8 EXIF orientation values including mirrored orientations (5-8)
    */
   static async processWithOrientation(inputPath: string): Promise<sharp.Sharp> {
-    return sharp(inputPath)
-      // Sharp automatically reads and applies EXIF orientation
-      .rotate() // This applies the EXIF orientation automatically
+    const image = sharp(inputPath);
+    const metadata = await image.metadata();
+    const orientation = metadata.orientation || 1;
+
+    let processedImage = image;
+
+    // Handle EXIF orientation manually for complete control
+    // EXIF orientation values:
+    // 1: Normal (0°)
+    // 2: Flip horizontal
+    // 3: 180°
+    // 4: Flip vertical
+    // 5: 90° CW + flip horizontal
+    // 6: 90° CW
+    // 7: 90° CCW + flip horizontal
+    // 8: 90° CCW
+
+    switch (orientation) {
+      case 1:
+        // Normal - no transformation needed
+        break;
+      case 2:
+        // Flip horizontal
+        processedImage = processedImage.flop();
+        break;
+      case 3:
+        // 180° rotation
+        processedImage = processedImage.rotate(180);
+        break;
+      case 4:
+        // Flip vertical
+        processedImage = processedImage.flip();
+        break;
+      case 5:
+        // 90° CW + flip horizontal (transpose)
+        processedImage = processedImage.rotate(90).flop();
+        break;
+      case 6:
+        // 90° CW
+        processedImage = processedImage.rotate(90);
+        break;
+      case 7:
+        // 90° CCW + flip horizontal (transverse)
+        processedImage = processedImage.rotate(270).flop();
+        break;
+      case 8:
+        // 90° CCW
+        processedImage = processedImage.rotate(270);
+        break;
+      default:
+        // Unknown orientation - use Sharp's automatic handling as fallback
+        processedImage = processedImage.rotate();
+        break;
+    }
+
+    // CRITICAL: For orientations that involve 90° rotations (5,6,7,8),
+    // we need to ensure the image pipeline is properly flushed
+    // to get the correct dimensions for subsequent operations
+    if ([5, 6, 7, 8].includes(orientation)) {
+      // Convert to buffer and back to ensure dimensions are updated
+      const buffer = await processedImage
+        .ensureAlpha(0)
+        .toColorspace('srgb')
+        .png() // Use PNG to preserve exact pixel data
+        .toBuffer();
+
+      return sharp(buffer);
+    }
+
+    return processedImage
       .ensureAlpha(0) // Remove alpha channel for JPEG output
       .toColorspace('srgb'); // Ensure sRGB color space
   }

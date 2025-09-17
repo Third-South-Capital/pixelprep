@@ -7,6 +7,10 @@
   "scripts": {
     "build": "tsc",
     "test": "node dist/test.js",
+    "test:user-journey": "tsc && node dist/tests/user-journey.test.js",
+    "test:bug-prevention": "tsc && node dist/tests/bug-prevention.test.js",
+    "test:comprehensive": "tsc && node dist/tests/test-runner.js",
+    "test:critical": "tsc && node dist/tests/test-runner.js --critical",
     "dev": "tsc && node dist/test.js"
   },
   "dependencies": {
