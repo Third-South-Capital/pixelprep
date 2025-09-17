@@ -1,12 +1,18 @@
 /**
  * Instagram Square Processor - Sharp.js Implementation
  * Parallel implementation to PixelPrep's Python/PIL InstagramSquareProcessor
+ *
+ * Note: When deploying to Vercel, ensure input files are under 4.5MB
+ * (Vercel's request body size limit for serverless functions)
  */
 
 import sharp from 'sharp';
 import { SharpUtils, OptimizationResult, ImageMetadata } from './sharp-utils.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+
+// Vercel serverless function request body size limit
+export const VERCEL_MAX_REQUEST_SIZE_MB = 4.5;
 
 export interface ProcessingResult {
   success: boolean;

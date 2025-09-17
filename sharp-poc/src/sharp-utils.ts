@@ -23,6 +23,18 @@ export interface ImageMetadata {
   hasProfile: boolean;
 }
 
+// EXIF orientation constants for clearer code
+const ORIENTATION = {
+  NORMAL: 1,              // Normal (0°)
+  FLIP_HORIZONTAL: 2,     // Flip horizontal
+  ROTATE_180: 3,          // 180° rotation
+  FLIP_VERTICAL: 4,       // Flip vertical
+  TRANSPOSE: 5,           // 90° CW + flip horizontal (transpose)
+  ROTATE_90: 6,           // 90° CW
+  TRANSVERSE: 7,          // 90° CCW + flip horizontal (transverse)
+  ROTATE_270: 8           // 90° CCW
+} as const;
+
 export class SharpUtils {
 
   /**
@@ -69,34 +81,34 @@ export class SharpUtils {
     // 8: 90° CCW
 
     switch (orientation) {
-      case 1:
+      case ORIENTATION.NORMAL:
         // Normal - no transformation needed
         break;
-      case 2:
+      case ORIENTATION.FLIP_HORIZONTAL:
         // Flip horizontal
         processedImage = processedImage.flop();
         break;
-      case 3:
+      case ORIENTATION.ROTATE_180:
         // 180° rotation
         processedImage = processedImage.rotate(180);
         break;
-      case 4:
+      case ORIENTATION.FLIP_VERTICAL:
         // Flip vertical
         processedImage = processedImage.flip();
         break;
-      case 5:
+      case ORIENTATION.TRANSPOSE:
         // 90° CW + flip horizontal (transpose)
         processedImage = processedImage.rotate(90).flop();
         break;
-      case 6:
+      case ORIENTATION.ROTATE_90:
         // 90° CW
         processedImage = processedImage.rotate(90);
         break;
-      case 7:
+      case ORIENTATION.TRANSVERSE:
         // 90° CCW + flip horizontal (transverse)
         processedImage = processedImage.rotate(270).flop();
         break;
-      case 8:
+      case ORIENTATION.ROTATE_270:
         // 90° CCW
         processedImage = processedImage.rotate(270);
         break;
@@ -109,7 +121,7 @@ export class SharpUtils {
     // CRITICAL: For orientations that involve 90° rotations (5,6,7,8),
     // we need to ensure the image pipeline is properly flushed
     // to get the correct dimensions for subsequent operations
-    if ([5, 6, 7, 8].includes(orientation)) {
+    if ([ORIENTATION.TRANSPOSE, ORIENTATION.ROTATE_90, ORIENTATION.TRANSVERSE, ORIENTATION.ROTATE_270].includes(orientation as any)) {
       // Convert to buffer and back to ensure dimensions are updated
       const buffer = await processedImage
         .ensureAlpha(0)
@@ -166,6 +178,11 @@ export class SharpUtils {
   /**
    * Optimize file size through iterative quality reduction
    * Matches Python's save_optimized_with_metadata behavior
+   *
+   * This method iteratively reduces JPEG quality to meet file size constraints
+   * while maintaining the best possible visual quality. It starts at qualityStart
+   * and decrements by 5 until the file size is under maxSizeBytes or qualityMin
+   * is reached.
    */
   static async optimizeFileSize(
     image: sharp.Sharp,
